@@ -166,9 +166,8 @@ def get_all_runes_data(lang=DEF_LANG):
 
 def get_rune_img(icon_url):
     """
-    Devuelve icono de la runa
+    Devuelve la url al icono de la runa
     """
 
-    icon_url = icon_url.lower()
-    url = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/{}".format(icon_url)
+    url = "https://ddragon.leagueoflegends.com/cdn/img/{}".format(icon_url)
     return url

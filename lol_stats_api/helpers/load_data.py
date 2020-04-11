@@ -13,7 +13,7 @@ import re
 
 db = get_mongo_assets()
 
-def load_data(force=False):
+def load_data(force=False, clean_load=False):
     """
     Carga los datos de la version actual a mongo
     """
@@ -32,22 +32,22 @@ def load_data(force=False):
         db.metadata.insert_one(new_data)
 
     # Cargo datos de campeones
-    # load_champ_data()
+    load_champ_data(clean_load=clean_load)
 
     # # Datos de objetos
-    # load_item_data()
+    load_item_data(clean_load=clean_load)
 
     # # Datos de summs
-    # load_summ_data()
+    load_summ_data(clean_load=clean_load)
 
     # # Datos de iconos
-    # load_icon_data()
+    load_icon_data(clean_load=clean_load)
 
     # Datos de runas
-    load_rune_data()
+    load_rune_data(clean_load=clean_load)
 
     
-def load_champ_data():
+def load_champ_data(clean_load):
     """
     Cargo la info de los campeones a mongo
     """
@@ -55,6 +55,10 @@ def load_champ_data():
     print("========================")
     print("Inicio proceso de campeones")
     print("========================")
+
+    if clean_load:
+        # Borro todo antes
+        db.champ.remove({})
 
     champ_data = get_all_champ_data()
     champ_data = champ_data['data']
@@ -124,13 +128,19 @@ def load_champ_data():
         db.champ.replace_one({"id":champ['id']}, champ, upsert=True)
 
 
-def load_item_data():
+def load_item_data(clean_load):
     """
     Carga a mongo los datos de los items
     """
     print("========================")
     print("Inicio proceso de objetos")
     print("========================")
+
+    if clean_load:
+        # Borro todo antes
+        db.item.remove({})
+
+
     item_data = get_all_item_data()
     item_data = item_data['data']
 
@@ -157,13 +167,19 @@ def load_item_data():
         db.item.replace_one({"id":item['id']}, item, upsert=True)
         
 
-def load_summ_data():
+def load_summ_data(clean_load):
     """
     Guarda los datos de los summoners en mongo
     """
     print("========================")
     print("Inicio proceso de summoners")
     print("========================")
+
+    if clean_load:
+        # Borro todo antes
+        db.summ.remove({})
+
+
     summ_data = get_all_summoners_data()
     summ_data = summ_data['data']
 
@@ -185,13 +201,19 @@ def load_summ_data():
         db.summ.replace_one({"id":summ['id']}, summ, upsert=True)
     
 
-def load_icon_data():
+def load_icon_data(clean_load):
     """
     Carga datos de los iconos
     """ 
     print("========================")
     print("Inicio proceso de iconos")
     print("========================")
+
+    if clean_load:
+        # Borro todo antes
+        db.icon.remove({})
+
+
     icon_data = get_all_icon_data()
     icon_data = icon_data['data']
 
@@ -210,13 +232,18 @@ def load_icon_data():
         db.icon.replace_one({"id":icon['id']}, icon, upsert=True)
 
 
-def load_rune_data():
+def load_rune_data(clean_load):
     """
     Carga datos de las runas
     """ 
     print("========================")
     print("Inicio proceso de runas")
     print("========================")
+
+    if clean_load:
+        # Borro todo antes
+        db.rune.remove({})
+
     rune_data = get_all_runes_data()
 
     fixed_data = []
