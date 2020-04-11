@@ -153,5 +153,22 @@ def get_icon_img(icon):
     return url
 
 
+# Runes
 
+def get_all_runes_data(lang=DEF_LANG):
+    """
+    Devuelve la lista de runas
+    """
+    saved_version = get_saved_version()
+    url = "https://ddragon.leagueoflegends.com/cdn/{}/data/{}/runesReforged.json".format(saved_version, lang)
+    r = requests.get(url)
+    return r.json()
 
+def get_rune_img(icon_url):
+    """
+    Devuelve icono de la runa
+    """
+
+    icon_url = icon_url.lower()
+    url = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/{}".format(icon_url)
+    return url

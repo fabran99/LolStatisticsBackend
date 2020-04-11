@@ -4,6 +4,7 @@ from .ddragon_routes import get_item_img,get_all_item_data
 from .ddragon_routes import get_all_summoners_data,get_summoner_img
 from .ddragon_routes import get_all_icon_data, get_icon_img
 from .ddragon_routes import get_current_version, get_all_maps
+from .ddragon_routes import get_all_runes_data, get_rune_img
 
 from .mongodb import get_mongo_assets,get_saved_version
 
@@ -31,16 +32,19 @@ def load_data(force=False):
         db.metadata.insert_one(new_data)
 
     # Cargo datos de campeones
-    load_champ_data()
+    # load_champ_data()
 
-    # Datos de objetos
-    load_item_data()
+    # # Datos de objetos
+    # load_item_data()
 
-    # Datos de summs
-    load_summ_data()
+    # # Datos de summs
+    # load_summ_data()
 
-    # Datos de iconos
-    load_icon_data()
+    # # Datos de iconos
+    # load_icon_data()
+
+    # Datos de runas
+    load_rune_data()
 
     
 def load_champ_data():
@@ -204,6 +208,46 @@ def load_icon_data():
     for icon in fixed_data:
         print("Actualizando datos de ícono {}".format(icon['id']))
         db.icon.replace_one({"id":icon['id']}, icon, upsert=True)
+
+
+def load_rune_data():
+    """
+    Carga datos de las runas
+    """ 
+    print("========================")
+    print("Inicio proceso de runas")
+    print("========================")
+    rune_data = get_all_runes_data()
+
+    fixed_data = []
+
+    for value in rune_data:
+        data ={
+            "id":value['id'],
+            "key":value['key'],
+            "name":value['name'],
+            "image":get_rune_img(value['icon'])
+        }
+
+        data['slots']=[]
+        for slot in value['slots']:
+            slot_data=[
+                {
+                    "id":rune['id'],
+                    "key":rune['key'],
+                    "name":rune['name'],
+                    "image":get_rune_img(rune['icon']),
+                    "description":sanitize_skill_desc(rune['shortDesc'])
+                } for rune in slot['runes']
+            ]
+            data['slots'].append(slot_data)
+
+        fixed_data.append(data)
+    
+    # Inserto en mongo
+    for rune in fixed_data:
+        print("Actualizando datos de runa {}".format(rune['name']))
+        db.rune.replace_one({"id":rune['id']}, rune, upsert=True)
 
     
 def sanitize_skill_desc(description):
