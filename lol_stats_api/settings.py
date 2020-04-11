@@ -123,3 +123,5 @@ STATIC_URL = '/static/'
 API_KEY = os.getenv("API_KEY", None)
 DEF_LANGUAGE = os.getenv("DEF_LANGUAGE", None)
 MONGO_DB_HOST = os.getenv("MONGO_DB_HOST", None)
+
+PREPROCESS_PATH = os.path.join(os.path.split(BASE_DIR)[0] ,"preprocess")

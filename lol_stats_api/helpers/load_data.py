@@ -5,12 +5,12 @@ from .ddragon_routes import get_all_summoners_data,get_summoner_img
 from .ddragon_routes import get_all_icon_data, get_icon_img
 from .ddragon_routes import get_current_version, get_all_maps
 
-from .mongodb import get_mongodb,get_saved_version
+from .mongodb import get_mongo_assets,get_saved_version
 
 from datetime import datetime as dt
 import re
 
-db = get_mongodb()
+db = get_mongo_assets()
 
 def load_data(force=False):
     """

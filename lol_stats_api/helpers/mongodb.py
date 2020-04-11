@@ -1,18 +1,26 @@
 import pymongo
 from django.conf import settings
 
-def get_mongodb():
+def get_mongo_assets():
     """
-    Devuelve conexion con mongodb
+    Devuelve conexion con mongodb de assets
     """
     client = pymongo.MongoClient(
         host=settings.MONGO_DB_HOST,
-        port=27017,
-        connectTimeoutMS=8000, socketTimeoutMS=8000, serverSelectionTimeoutMS=30000, waitQueueTimeoutMS=8000,
-        connect=False,
-        tz_aware=True
+        port=27017
     )
-    mongodb = client.lol_app
+    mongodb = client.assets
+    return mongodb
+
+def get_mongo_data():
+    """
+    Devuelve conexion con mongodb de datos
+    """
+    client = pymongo.MongoClient(
+        host=settings.MONGO_DB_HOST,
+        port=27017
+    )
+    mongodb = client.lol_data
     return mongodb
 
 
@@ -21,7 +29,7 @@ def get_saved_version():
     Devuelve la ultima version cuyos datos han sido actualizados
     en mongo
     """
-    current_system_data = get_mongodb().metadata.find_one({})
+    current_system_data = get_mongo_assets().metadata.find_one({})
     if current_system_data is None:
         return None
 
