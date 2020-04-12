@@ -24,6 +24,15 @@ def get_player_by_name(name, region):
     return get_data_or_none(url)
 
 
+def get_player_by_id(name, region):
+    """
+    Devuelve la informacion de un jugador segun su encrypted id
+    y region, retorna None si no se encuentra
+    """
+    url = "https://{}/lol/summoner/v4/summoners/{}".format(SERVER_ROUTES[region], str(name))
+    return get_data_or_none(url)
+
+
 # Matches
 def get_current_match_by_player_id(id, region):
     """
@@ -46,15 +55,14 @@ def get_match_by_id(id, region):
     return get_data_or_none(url)
 
 
-def get_matchlist_by_account_id(id, region, only_ranked=False):
+def get_matchlist_by_account_id(id, region, only_ranked=False, endIndex=100):
     """
     Devuelve la matchlist de un summoner segun su account id,
     o None si no lo encuentra
     """
 
-    url = "https://{}/lol/match/v4/matchlists/by-account/{}".format(SERVER_ROUTES[region], str(id))
+    url = "https://{}/lol/match/v4/matchlists/by-account/{}?endIndex={}".format(SERVER_ROUTES[region], str(id), str(endIndex))
     if only_ranked:
-        url+="?"
         for x in RANKED_QUEUES:
             url+="&queue="+str(x)
     

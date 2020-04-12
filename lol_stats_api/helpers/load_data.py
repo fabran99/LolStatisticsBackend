@@ -47,7 +47,7 @@ def load_data(force=False, clean_load=False):
     load_rune_data(clean_load=clean_load)
 
     
-def load_champ_data(clean_load):
+def load_champ_data(clean_load=False):
     """
     Cargo la info de los campeones a mongo
     """
@@ -128,7 +128,7 @@ def load_champ_data(clean_load):
         db.champ.replace_one({"id":champ['id']}, champ, upsert=True)
 
 
-def load_item_data(clean_load):
+def load_item_data(clean_load=False):
     """
     Carga a mongo los datos de los items
     """
@@ -157,8 +157,18 @@ def load_item_data(clean_load):
            "description":value['plaintext'],
            "price":value['gold']['total'],
            "image":get_item_img(value['image']['full']),
-           "maps":[maps[x] for x,y in value['maps'].items() if y]
+           "maps":[maps[x] for x,y in value['maps'].items() if y],
+           "final_form":False,
+           "tags":value['tags']
         }
+
+        if not "into" in value.keys():
+            data['final_form']=True
+        elif len(value['into'])==1:
+            # Reviso si no es una mejora de un champ
+            if "requiredAlly" in item_data[value['into'][0]]:
+                data['final_form']=True
+
         fixed_data.append(data)
 
     # Inserto en mongo
@@ -167,7 +177,8 @@ def load_item_data(clean_load):
         db.item.replace_one({"id":item['id']}, item, upsert=True)
         
 
-def load_summ_data(clean_load):
+
+def load_summ_data(clean_load=False):
     """
     Guarda los datos de los summoners en mongo
     """
@@ -201,7 +212,7 @@ def load_summ_data(clean_load):
         db.summ.replace_one({"id":summ['id']}, summ, upsert=True)
     
 
-def load_icon_data(clean_load):
+def load_icon_data(clean_load=False):
     """
     Carga datos de los iconos
     """ 
@@ -232,7 +243,7 @@ def load_icon_data(clean_load):
         db.icon.replace_one({"id":icon['id']}, icon, upsert=True)
 
 
-def load_rune_data(clean_load):
+def load_rune_data(clean_load=False):
     """
     Carga datos de las runas
     """ 
@@ -267,7 +278,7 @@ def load_rune_data(clean_load):
                     "description":sanitize_skill_desc(rune['shortDesc'])
                 } for rune in slot['runes']
             ]
-            data['slots'].append(slot_data)
+            data['slots'].extend(slot_data)
 
         fixed_data.append(data)
     
