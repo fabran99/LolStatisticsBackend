@@ -12,7 +12,7 @@ def get_mongo_assets():
     mongodb = client.assets
     return mongodb
 
-def get_mongo_data():
+def get_mongo_stats():
     """
     Devuelve conexion con mongodb de datos
     """
@@ -20,7 +20,7 @@ def get_mongo_data():
         host=settings.MONGO_DB_HOST,
         port=27017
     )
-    mongodb = client.lol_data
+    mongodb = client.statistics
     return mongodb
 
 

@@ -1,15 +1,24 @@
 import requests
-
-from .variables import DIVISIONS, TIERS, TOKEN_HEADER, SERVER_ROUTES, RANKED_QUEUES
+from time import sleep
+from lol_stats_api.helpers.variables import DIVISIONS, TIERS, TOKEN_HEADER, SERVER_ROUTES, RANKED_QUEUES
 
 
 def get_data_or_none(url):
     """
     Hace un get a una url, si el status no es 200 retorna None
     """
-    r = requests.get(url, headers=TOKEN_HEADER)
-    if r.status_code==200:
-        return r.json()
+    try:
+        r = requests.get(url, headers=TOKEN_HEADER)
+        if r.status_code==200:
+            return r.json()
+    except requests.exceptions.ConnectionError:
+        sleep(60)
+        try:
+            r = requests.get(url, headers=TOKEN_HEADER)
+            if r.status_code==200:
+                return r.json()
+        except:
+            return None
 
     return None
 

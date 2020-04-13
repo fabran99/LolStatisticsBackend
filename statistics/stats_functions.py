@@ -1,7 +1,7 @@
-from api.riot_api_routes import *
-from api.variables import SERVER_ROUTES, SERVER_REAL_NAME_TO_ROUTE
-from api.variables import DIVISIONS, TIERS, GAME_TYPE,MAIN_GAMEMODE,RANKED_QUEUES
-from api.variables import MATCHES_STATS_KEYS,PLAYSTYLE_STATS_KEYS
+from .riot_api_routes import *
+from lol_stats_api.helpers.variables import SERVER_ROUTES, SERVER_REAL_NAME_TO_ROUTE
+from lol_stats_api.helpers.variables import DIVISIONS, TIERS, GAME_TYPE,MAIN_GAMEMODE,RANKED_QUEUES
+from lol_stats_api.helpers.variables import MATCHES_STATS_KEYS,PLAYSTYLE_STATS_KEYS
 
 import json
 from django.conf import settings
@@ -13,7 +13,7 @@ import pandas as pd
 from time import sleep
 
 league_data_route=path.join(settings.PREPROCESS_PATH, "league_data.json")
-player_sample_route=path.join(settings.PREPROCESS_PATH, "player_sample.json")
+player_sample_route=path.join(settings.PREPROCESS_PATH, "player_sample.csv")
 matches_sample_route=path.join(settings.PREPROCESS_PATH, "matches_sample.csv")
 champ_ban_file=path.join(settings.PREPROCESS_PATH, "champ_ban.csv")
 champ_data_file=path.join(settings.PREPROCESS_PATH, "champ_data.csv")
@@ -59,7 +59,7 @@ def get_player_data():
 
 def get_player_sample_from_json():
     """
-    Guarda en json una muestra de 5 jugadores random de cada liga,
+    Guarda en csv una muestra de 5 jugadores random de cada liga,
     si no encuentra el json retorna None
     """
 
@@ -101,18 +101,19 @@ def get_player_sample_from_json():
                 
                 sample_data['leagues'][server][tier][division]= random.sample(league_data['leagues'][server][tier][division], sample)
 
-    data = parse_player_sample_data(sample_data)
-    with open(player_sample_route, "w") as f:
-        json.dump(data, f, indent=4)
-
-    print("Json generado en {}".format(player_sample_route))
+    save_player_sample_data(sample_data)
 
 
-def parse_player_sample_data(league_data):
+    print("Csv generado en {}".format(player_sample_route))
 
+
+def save_player_sample_data(league_data):
+    """
+    Procesa y guarda la info de cada jugador que recibe como parametro
+    """
     high_elo_keys = ['challengers','masters','grandmasters']
 
-    player_list = []
+    player_list = pd.DataFrame()
 
     for elo in high_elo_keys:
         for server in SERVER_ROUTES.keys():
@@ -132,7 +133,7 @@ def parse_player_sample_data(league_data):
                 if playerData is None:
                     continue
 
-                player_list.append({
+                player_list = player_list.append([{
                     "summonerId":player['summonerId'],
                     "tier":player['rank'],
                     "leaguePoints":player['leaguePoints'],
@@ -147,7 +148,8 @@ def parse_player_sample_data(league_data):
                     "profileIconId":playerData['profileIconId'],
                     "summonerLevel":playerData['summonerLevel'],
                     "revisionDate":playerData['revisionDate'],
-                })
+                }])
+                player_list.to_csv(player_sample_route, index=False)
 
     for tier in TIERS:
         for division in DIVISIONS:
@@ -165,7 +167,7 @@ def parse_player_sample_data(league_data):
                     if playerData is None:
                         continue
 
-                    player_list.append({
+                    player_list = player_list.append([{
                         "summonerId":player['summonerId'],
                         "tier":player['rank'],
                         "leaguePoints":player['leaguePoints'],
@@ -180,18 +182,21 @@ def parse_player_sample_data(league_data):
                         "profileIconId":playerData['profileIconId'],
                         "summonerLevel":playerData['summonerLevel'],
                         "revisionDate":playerData['revisionDate'],
-                    })
+                    }])
+                    player_list.to_csv(player_sample_route, index=False)
 
     return player_list
 
 
 def get_10_matches_from_player_list():
+    """
+    Guarda lista de las ultimas 10 partidas de cada jugador 
+    """
     if not path.isfile(player_sample_route):
         print("No se encuentra el archivo")
         return None
 
-    df = pd.read_json(player_sample_route)
-
+    df = pd.read_csv(player_sample_route,keep_default_na=False)
     # Desordeno el dataframe para evitar agotar el maximo de requests
     df = df.sample(frac=1).reset_index(drop=True)
 
@@ -203,15 +208,20 @@ def get_10_matches_from_player_list():
         if game_list is not None:
             game_list=[{**x, "division":row['division'] , "tier":row['tier']} for x in game_list]
             game_list_df= game_list_df.append(game_list)
+            game_list_df.reset_index(drop=True, inplace=True)
+
+            game_list_df.to_csv(matches_sample_route, index=False)
+
         else:
             sleep(30)
             game_list = get_matchlist_by_account_id(row['accountId'],row['server'], only_ranked=True, endIndex=10)
             if game_list is not None:
                 game_list=[{**x,  "division":row['division'], "tier":row['tier']} for x in game_list]
                 game_list_df= game_list_df.append(game_list)
+                game_list_df.reset_index(drop=True, inplace=True)
+
+                game_list_df.to_csv(matches_sample_route, index=False)
         
-    # Reseteo el indice
-    game_list_df.reset_index(drop=True, inplace=True)
     # filtro juegos repetidos si los hay
     game_list_df = game_list_df.sort_values("gameId").drop_duplicates(['gameId','platformId'])
 
@@ -220,6 +230,9 @@ def get_10_matches_from_player_list():
 
 
 def get_stats_from_matches():
+    """
+    Arma 3 csv con estadisticas
+    """
     if not path.isfile(matches_sample_route):
         print("No se encuentra el archivo")
         return None
@@ -228,7 +241,7 @@ def get_stats_from_matches():
         print("No se encuentra el archivo")
         return None
 
-    matches = pd.read_csv(matches_sample_route)
+    matches = pd.read_csv(matches_sample_route,keep_default_na=False)
     # Desordeno el dataframe para evitar agotar el maximo de requests
     matches = matches.sample(frac=1).reset_index(drop=True)
 
@@ -239,7 +252,6 @@ def get_stats_from_matches():
     for index, row in matches.iterrows():
         # Traigo datos del match actual
         print("Procesando partida {} de {}".format(index, len(matches)))
-        sleep(0.1)
         match_detail = get_match_by_id(row['gameId'], SERVER_REAL_NAME_TO_ROUTE[row['platformId']])
 
         if match_detail is None:
@@ -300,14 +312,16 @@ def get_stats_from_matches():
                     playstyle[x]=participant['stats'][x]
 
             playstyle_data = playstyle_data.append([playstyle])
-
-            
-    champ_data.to_csv(champ_data_file, index=False)
-    champ_ban.to_csv(champ_ban_file, index=False)
-    playstyle_data.to_csv(playstyle_data_file, index=False)
-
     
+    playstyle_data.to_csv(playstyle_data_file, index=False)
+    champ_data.to_csv(champ_data_file, index=False)
+    champ_ban.to_csv(champ_ban_file,index=False)
 
+
+def process_stats():
+    # get_player_sample_from_json()
+    get_10_matches_from_player_list()
+    get_stats_from_matches()
     
 
             

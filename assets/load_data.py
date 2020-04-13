@@ -6,7 +6,7 @@ from .ddragon_routes import get_all_icon_data, get_icon_img
 from .ddragon_routes import get_current_version, get_all_maps
 from .ddragon_routes import get_all_runes_data, get_rune_img
 
-from .mongodb import get_mongo_assets,get_saved_version
+from lol_stats_api.helpers.mongodb import get_mongo_assets,get_saved_version
 
 from datetime import datetime as dt
 import re
@@ -108,7 +108,8 @@ def load_champ_data(clean_load=False):
                 "id":x['id'],
                 "name":x['name'],
                 "description":sanitize_skill_desc(x['description']),
-                "image":get_champ_skill_img(x['image']['full'])
+                "image":get_champ_skill_img(x['image']['full']),
+                "cooldown":x['cooldown']
             }
             new_value['skills'].append(skill_data)
         
@@ -176,7 +177,6 @@ def load_item_data(clean_load=False):
         print("Actualizando datos de {}".format(item['name']))
         db.item.replace_one({"id":item['id']}, item, upsert=True)
         
-
 
 def load_summ_data(clean_load=False):
     """

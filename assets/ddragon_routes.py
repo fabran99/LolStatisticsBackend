@@ -1,6 +1,6 @@
 import requests
 from django.conf import settings
-from .mongodb import get_saved_version
+from lol_stats_api.helpers.mongodb import get_saved_version
 
 DEF_LANG=settings.DEF_LANGUAGE
 
