@@ -1,4 +1,7 @@
 from django.conf import settings
+import pandas as pd
+from os import path
+from assets.get_assets_mongodb import *
 
 GRIETA = {
     "name":"Summoner's Rift",
@@ -58,3 +61,34 @@ MATCHES_STATS_KEYS=[
 PLAYSTYLE_STATS_KEYS = [
     "win","kills","assists","deaths","totalDamageDealtToChampions","magicDamageDealtToChampions","physicalDamageDealtToChampions","goldEarned","totalMinionsKilled","neutralMinionsKilled","neutralMinionsKilledTeamJungle","neutralMinionsKilledEnemyJungle","wardsPlaced","wardsKilled",
 ]
+
+HIGH_ELO_TIERS = ["DIAMOND","PLATINUM","challengers","masters","grandmasters"]
+
+
+# =================================
+# Item clases
+# =================================
+
+# Busco items que esten en su forma final
+df_items = pd.DataFrame(get_all_items_data(final_form_only=True)).T[["name","id","price",'final_form',"tags"]]
+# Items de vision
+trinkets = df_items.loc[((df_items['tags'].astype(str).str.contains("Trinket")))]['id'].tolist()
+# Items finales
+final_form_items = df_items.loc[~((df_items['tags'].astype(str).str.contains("Trinket|Consumable")))]['id'].unique()
+# Botas
+boots = df_items.loc[(df_items['tags'].astype(str).str.contains("Boots"))]['id'].tolist()
+# GoldPer
+support_items =  df_items.loc[((df_items['tags'].astype(str).str.contains("GoldPer")))]['id'].unique()
+# Jungle items
+jungle_items = df_items.loc[(df_items['name'].astype(str).str.contains("Encantamiento"))]['id'].unique()
+
+
+# =============================
+# Csv preprocess de datos
+# =============================
+league_data_route=path.join(settings.PREPROCESS_PATH, "league_data.json")
+player_sample_route=path.join(settings.PREPROCESS_PATH, "player_sample.csv")
+matches_sample_route=path.join(settings.PREPROCESS_PATH, "matches_sample.csv")
+champ_ban_file=path.join(settings.PREPROCESS_PATH, "champ_ban.csv")
+champ_data_file=path.join(settings.PREPROCESS_PATH, "champ_data.csv")
+playstyle_data_file=path.join(settings.PREPROCESS_PATH, "playstyle_data.csv")

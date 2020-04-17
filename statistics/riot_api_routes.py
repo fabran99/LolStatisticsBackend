@@ -64,7 +64,7 @@ def get_match_by_id(id, region):
     return get_data_or_none(url)
 
 
-def get_matchlist_by_account_id(id, region, only_ranked=False, endIndex=100):
+def get_matchlist_by_account_id(id, region, only_ranked=False, endIndex=100,beginTime=None):
     """
     Devuelve la matchlist de un summoner segun su account id,
     o None si no lo encuentra
@@ -74,6 +74,9 @@ def get_matchlist_by_account_id(id, region, only_ranked=False, endIndex=100):
     if only_ranked:
         for x in RANKED_QUEUES:
             url+="&queue="+str(x)
+
+    if beginTime is not None:
+        url+= "&beginTime="+str(beginTime)
     
     response = get_data_or_none(url)
     if response is None:

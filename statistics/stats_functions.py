@@ -2,6 +2,9 @@ from .riot_api_routes import *
 from lol_stats_api.helpers.variables import SERVER_ROUTES, SERVER_REAL_NAME_TO_ROUTE
 from lol_stats_api.helpers.variables import DIVISIONS, TIERS, GAME_TYPE,MAIN_GAMEMODE,RANKED_QUEUES
 from lol_stats_api.helpers.variables import MATCHES_STATS_KEYS,PLAYSTYLE_STATS_KEYS
+from lol_stats_api.helpers.variables import league_data_route, player_sample_route, matches_sample_route, champ_ban_file, champ_data_file, playstyle_data_file
+
+from .calculations import generate_builds_stats_by_champ
 
 import json
 from django.conf import settings
@@ -12,15 +15,18 @@ import random
 import pandas as pd
 from time import sleep
 
-league_data_route=path.join(settings.PREPROCESS_PATH, "league_data.json")
-player_sample_route=path.join(settings.PREPROCESS_PATH, "player_sample.csv")
-matches_sample_route=path.join(settings.PREPROCESS_PATH, "matches_sample.csv")
-champ_ban_file=path.join(settings.PREPROCESS_PATH, "champ_ban.csv")
-champ_data_file=path.join(settings.PREPROCESS_PATH, "champ_data.csv")
-playstyle_data_file=path.join(settings.PREPROCESS_PATH, "playstyle_data.csv")
+def_sample={
+    "challengers":5,
+    "masters":5,
+    "grandmasters":5,
+    "DIAMOND":5,
+    "PLATINUM":5,
+    "GOLD":5,
+    "SILVER":5,
+    "BRONZE":5,
+    "IRON":5
+}
 
-
-def_sample = 5
 
 def get_player_data():
     """
@@ -57,16 +63,17 @@ def get_player_data():
     print("Json generado en {}".format(league_data_route))
 
 
-def get_player_sample_from_json():
+def get_player_sample_from_json(leaguedict=def_sample):
     """
-    Guarda en csv una muestra de 5 jugadores random de cada liga,
-    si no encuentra el json retorna None
+    Guarda en csv una muestra de jugadores random de cada liga, segun el diccionario enviado,
+    si no encuentra el json retorna None, el diccionario debe tener cada liga y una cantidad de jugadores para la misma
     """
 
     if not path.isfile(league_data_route):
         print("No se encuentra el archivo")
         return None
 
+    # Cargo la data de jugadores
     with open(league_data_route, "r") as f:
         league_data = json.load(f)
     
@@ -74,11 +81,17 @@ def get_player_sample_from_json():
 
     sample_data={}
     for elo in high_elo_keys:
+        # Si no pedi jugadores de este elo los ignoro
+        if def_sample[elo] == 0:
+            continue
+
         sample_data[elo]={}
         for server, data in league_data[elo].items():
             if league_data[elo][server] is None:
                 continue
-            sample = def_sample
+        
+            # Defino la cantidad de jugadores para la muestra
+            sample = def_sample[elo]
             if len(league_data[elo][server]['entries']) < sample:
                 sample = len(league_data[elo][server]['entries'])
             if sample == 0:
@@ -90,9 +103,14 @@ def get_player_sample_from_json():
     for server in SERVER_ROUTES.keys():
         sample_data['leagues'][server]={}
         for tier in TIERS:
+            # Si no pedi jugadores de este elo los ignoro
+            if def_sample[tier] == 0:
+                continue
+
             sample_data['leagues'][server][tier]={}
             for division in DIVISIONS:
-                sample = def_sample
+                # Defino la cantidad de jugadores para la muestra
+                sample = def_sample[tier]
                 total = len(league_data['leagues'][server][tier][division])
                 if total < sample:
                     sample = total
@@ -102,7 +120,6 @@ def get_player_sample_from_json():
                 sample_data['leagues'][server][tier][division]= random.sample(league_data['leagues'][server][tier][division], sample)
 
     save_player_sample_data(sample_data)
-
 
     print("Csv generado en {}".format(player_sample_route))
 
@@ -116,6 +133,8 @@ def save_player_sample_data(league_data):
     player_list = pd.DataFrame()
 
     for elo in high_elo_keys:
+        if not elo in league_data:
+            continue
         for server in SERVER_ROUTES.keys():
             if not server in league_data[elo].keys():
                 continue
@@ -126,7 +145,6 @@ def save_player_sample_data(league_data):
                 playerData=get_player_by_id(player['summonerId'],server)
                 print("Guardando datos de {} ({})".format(player['summonerName'], server))
                 # si me devuelve none porque excedi las requests espero un min y sigo
-                sleep(0.2)
                 if playerData is None:
                     sleep(30)
                     playerData=get_player_by_id(player['summonerId'],server)
@@ -135,13 +153,13 @@ def save_player_sample_data(league_data):
 
                 player_list = player_list.append([{
                     "summonerId":player['summonerId'],
-                    "tier":player['rank'],
+                    "tier": elo,
                     "leaguePoints":player['leaguePoints'],
                     "wins":player['wins'],
                     "losses":player['losses'],
                     "summonerName":player['summonerName'],
                     "server":server,
-                    "division":elo,
+                    "division":player['rank'],
                     "winrate":round(player['wins']*100/(player['wins']+player['losses']),1),
                     "accountId":playerData['accountId'],
                     "puuid":playerData['puuid'],
@@ -149,7 +167,6 @@ def save_player_sample_data(league_data):
                     "summonerLevel":playerData['summonerLevel'],
                     "revisionDate":playerData['revisionDate'],
                 }])
-                player_list.to_csv(player_sample_route, index=False)
 
     for tier in TIERS:
         for division in DIVISIONS:
@@ -160,7 +177,6 @@ def save_player_sample_data(league_data):
                     playerData=get_player_by_id(player['summonerId'],server)
                     print("Guardando datos de {} ({})".format(player['summonerName'], server))
                     # si me devuelve none porque excedi las requests espero un min y sigo
-                    sleep(0.2)
                     if playerData is None:
                         sleep(30)
                         playerData=get_player_by_id(player['summonerId'],server)
@@ -169,13 +185,13 @@ def save_player_sample_data(league_data):
 
                     player_list = player_list.append([{
                         "summonerId":player['summonerId'],
-                        "tier":player['rank'],
+                        "tier":player['tier'],
                         "leaguePoints":player['leaguePoints'],
                         "wins":player['wins'],
                         "losses":player['losses'],
                         "summonerName":player['summonerName'],
                         "server":server,
-                        "division":player['tier'],
+                        "division":player['rank'],
                         "winrate":round(player['wins']*100/(player['wins']+player['losses']),1),
                         "accountId":playerData['accountId'],
                         "puuid":playerData['puuid'],
@@ -183,12 +199,13 @@ def save_player_sample_data(league_data):
                         "summonerLevel":playerData['summonerLevel'],
                         "revisionDate":playerData['revisionDate'],
                     }])
-                    player_list.to_csv(player_sample_route, index=False)
+
+    player_list.to_csv(player_sample_route, index=False)
 
     return player_list
 
 
-def get_10_matches_from_player_list():
+def get_10_matches_from_player_list(beginTime=None):
     """
     Guarda lista de las ultimas 10 partidas de cada jugador 
     """
@@ -203,8 +220,7 @@ def get_10_matches_from_player_list():
     game_list_df = pd.DataFrame()
     for index, row in df.iterrows():
         print("Trayendo partidas de {} ({})".format(row['summonerName'], row['server']))
-        sleep(0.1)
-        game_list = get_matchlist_by_account_id(row['accountId'],row['server'], only_ranked=True, endIndex=10)
+        game_list = get_matchlist_by_account_id(row['accountId'],row['server'], only_ranked=True, endIndex=10, beginTime=beginTime)
         if game_list is not None:
             game_list=[{**x, "division":row['division'] , "tier":row['tier']} for x in game_list]
             game_list_df= game_list_df.append(game_list)
@@ -319,9 +335,25 @@ def get_stats_from_matches():
 
 
 def process_stats():
-    # get_player_sample_from_json()
-    get_10_matches_from_player_list()
+    sample = {
+        "challengers":40,
+        "masters":40,
+        "grandmasters":40,
+        "DIAMOND":15,
+        "PLATINUM":10,
+        "GOLD":0,
+        "SILVER":0,
+        "BRONZE":0,
+        "IRON":0
+    }
+
+    get_player_data()
+    get_player_sample_from_json(sample)
+    get_10_matches_from_player_list(beginTime=1586936590000)
     get_stats_from_matches()
+
+    generate_builds_stats_by_champ()
+
     
 
             

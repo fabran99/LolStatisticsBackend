@@ -1,5 +1,7 @@
 import pymongo
 from django.conf import settings
+from monary import Monary
+
 
 def get_mongo_assets():
     """
@@ -11,6 +13,16 @@ def get_mongo_assets():
     )
     mongodb = client.assets
     return mongodb
+
+
+def get_monary():
+    """
+    Devuelve conexion de monary
+    """
+    client = Monary(settings.MONGO_DB_HOST, 27017)
+    return client
+
+
 
 def get_mongo_stats():
     """

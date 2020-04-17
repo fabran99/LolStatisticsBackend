@@ -19,7 +19,7 @@ def load_data(force=False, clean_load=False):
     """
     saved_version = get_saved_version()
     game_version = get_current_version()
-
+    print(saved_version, game_version)
     if saved_version == game_version and not force:
         return None
     
@@ -151,6 +151,8 @@ def load_item_data(clean_load=False):
     maps = {str(x['mapId']):x['mapName'] for x in maps}
 
     for key, value in item_data.items():
+        if 'requiredAlly' in value.keys():
+            continue
         print("Trayendo datos de {}".format(value['name']))
         data = {
            "id":key,
@@ -162,6 +164,7 @@ def load_item_data(clean_load=False):
            "final_form":False,
            "tags":value['tags']
         }
+        
 
         if not "into" in value.keys():
             data['final_form']=True
