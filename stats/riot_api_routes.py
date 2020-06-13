@@ -12,7 +12,7 @@ def get_data_or_none(url):
         if r.status_code==200:
             return r.json()
     except requests.exceptions.ConnectionError:
-        sleep(60)
+        sleep(35)
         try:
             r = requests.get(url, headers=TOKEN_HEADER)
             if r.status_code==200:
@@ -64,7 +64,7 @@ def get_match_by_id(id, region):
     return get_data_or_none(url)
 
 
-def get_matchlist_by_account_id(id, region, only_ranked=False, endIndex=100,beginTime=None):
+def get_matchlist_by_account_id(id, region, only_ranked=False, endIndex=100,beginTime=None, endTime=None):
     """
     Devuelve la matchlist de un summoner segun su account id,
     o None si no lo encuentra
@@ -77,6 +77,8 @@ def get_matchlist_by_account_id(id, region, only_ranked=False, endIndex=100,begi
 
     if beginTime is not None:
         url+= "&beginTime="+str(beginTime)
+    if endTime is not None:
+        url+= "&endTime="+str(endTime)
     
     response = get_data_or_none(url)
     if response is None:
@@ -145,3 +147,15 @@ def get_player_list_master(region):
     return get_data_or_none(url)
 
 
+def get_high_elo_player_list_by_elo(elo, region):
+    """
+    De acuerdo al elo llama a la funcion correspondiente
+    """
+    if elo == "challengers":
+        return get_player_list_challenger(region)
+    elif elo == "masters":
+        return get_player_list_master(region)
+    elif elo == "grandmasters":
+        return get_player_list_grandmaster(region)
+    
+    return None

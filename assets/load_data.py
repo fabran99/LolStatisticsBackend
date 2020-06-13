@@ -22,14 +22,6 @@ def load_data(force=False, clean_load=False):
     print(saved_version, game_version)
     if saved_version == game_version and not force:
         return None
-    
-    # Actualizo la version por la actual
-    current_data = db.metadata.find_one({})
-    new_data = {"current_version":game_version, "updated":dt.utcnow()}
-    if current_data:
-        db.metadata.replace_one({"_id":current_data['_id']}, new_data)
-    else:
-        db.metadata.insert_one(new_data)
 
     # Cargo datos de campeones
     load_champ_data(clean_load=clean_load)
@@ -41,10 +33,18 @@ def load_data(force=False, clean_load=False):
     load_summ_data(clean_load=clean_load)
 
     # # Datos de iconos
-    load_icon_data(clean_load=clean_load)
+    # load_icon_data(clean_load=clean_load)
 
     # Datos de runas
     load_rune_data(clean_load=clean_load)
+
+     # Actualizo la version por la actual
+    current_data = db.metadata.find_one({})
+    new_data = {"current_version":game_version, "updated":dt.utcnow()}
+    if current_data:
+        db.metadata.replace_one({"_id":current_data['_id']}, new_data)
+    else:
+        db.metadata.insert_one(new_data)
 
     
 def load_champ_data(clean_load=False):
@@ -85,6 +85,8 @@ def load_champ_data(clean_load=False):
 
         # Detalles
         detailed_data = get_champ_data(value['id'])['data'][value['id']]
+        new_value['lore'] = detailed_data['lore']
+
         
         # Tips
         new_value['allytips']=detailed_data['allytips']
@@ -257,6 +259,7 @@ def load_rune_data(clean_load=False):
     if clean_load:
         # Borro todo antes
         db.rune.remove({})
+        db.perk.remove({})
 
     rune_data = get_all_runes_data()
 
@@ -290,7 +293,49 @@ def load_rune_data(clean_load=False):
         print("Actualizando datos de runa {}".format(rune['name']))
         db.rune.replace_one({"id":rune['id']}, rune, upsert=True)
 
-    
+    # Guardo statperks
+    version = get_saved_version()
+    # Revisar en
+    # https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/es_ar/v1/perks.json
+    perks = [{
+        "id":5005,
+        "name":"AttackSpeed",
+        "image":"http://ddragon.leagueoflegends.com/cdn/img/perk-images/StatMods/StatModsAdaptiveForceIcon.png",
+        "description":"+10% de Velocidad de Ataque"
+    },{
+        "id":5003,
+        "name":"MagicRes",
+        "image":"http://ddragon.leagueoflegends.com/cdn/img/perk-images/StatMods/StatModsMagicResIcon.png",
+        "description":"+8 de Resistencia Mágica"
+    },{
+        "id":5002,
+        "name":"Armor",
+        "image":"http://ddragon.leagueoflegends.com/cdn/img/perk-images/StatMods/StatModsArmorIcon.png",
+        "description":"+6 de armadura"
+    },{
+        "id":5001,
+        "name":"HealthScaling",
+        "image":"http://ddragon.leagueoflegends.com/cdn/img/perk-images/StatMods/StatModsHealthScalingIcon.png",
+        "description":"+15 a 90 de vida (según tu nivel)"
+    },
+        {
+        "id":5007,
+        "name":"CDRScaling",
+        "image":"http://ddragon.leagueoflegends.com/cdn/img/perk-images/StatMods/StatModsCDRScalingIcon.png",
+        "description":"+1-10% de RDE"
+    },
+        {
+        "id":5008,
+        "name":"Adaptive",
+        "image":"http://ddragon.leagueoflegends.com/cdn/img/perk-images/StatMods/StatModsAdaptiveForceIcon.png",
+        "description":"+1-10% de RDE"
+    }]
+
+    for perk in perks:
+        db.perk.replace_one({"id":perk['id']}, perk, upsert=True)
+
+
+
 def sanitize_skill_desc(description):
     """
     Quita elementos html de las descripciones de skill

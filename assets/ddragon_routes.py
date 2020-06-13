@@ -1,6 +1,5 @@
 import requests
 from django.conf import settings
-from lol_stats_api.helpers.mongodb import get_saved_version
 
 DEF_LANG=settings.DEF_LANGUAGE
 
@@ -30,9 +29,9 @@ def get_all_champ_data(lang=DEF_LANG):
     """
     Devuelve el listado completo de champs con sus datos
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/data/{}/champion.json".format(str(saved_version),str(lang))
-
+    print(saved_version)
     r = requests.get(url)
     data = r.json()
     return data
@@ -42,7 +41,7 @@ def get_champ_data(champ, lang=DEF_LANG):
     """
     Devuelve la informacion de un champ seleccionado
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/data/{}/champion/{}.json".format(str(saved_version),str(lang),str(champ))
 
     r = requests.get(url)
@@ -70,7 +69,7 @@ def get_champ_square_img(champ):
     """
     Devuelve la url de la imagen square de un champ
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/img/champion/{}.png".format(str(saved_version), str(champ))
     return url
 
@@ -79,7 +78,7 @@ def get_champ_passive_img(name):
     """
     Devuelve la url de la imagen de la pasiva de un champ
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/img/passive/{}".format(str(saved_version), str(name))
     return url
 
@@ -88,7 +87,7 @@ def get_champ_skill_img(name):
     """
     Devuelve la url de la imagen de una skill
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/img/spell/{}".format(str(saved_version),str(name))
     return url
 
@@ -98,7 +97,7 @@ def get_all_item_data(lang=DEF_LANG):
     """
     Devuelve la info de todos los items
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/data/{}/item.json".format(str(saved_version), str(lang))
     r = requests.get(url)
     return r.json()
@@ -108,7 +107,7 @@ def get_item_img(item):
     """
     Devuelve la imagen de un item por su id
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/img/item/{}".format(str(saved_version), str(item))
     return url
 
@@ -118,7 +117,7 @@ def get_all_summoners_data(lang=DEF_LANG):
     """
     Devuelve la info de todos los summoners
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/data/{}/summoner.json".format(str(saved_version),str(lang))
     r = requests.get(url)
     return r.json()
@@ -128,7 +127,7 @@ def get_summoner_img(img_name):
     """
     Devuelve la imagen de un summoner
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/img/spell/{}".format(str(saved_version),str(img_name))
     return url
 
@@ -138,7 +137,7 @@ def get_all_icon_data(lang=DEF_LANG):
     """
     Devuelve la lista de iconos
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/data/{}/profileicon.json".format(str(saved_version),str(lang))
     r = requests.get(url)
     return r.json()
@@ -148,7 +147,7 @@ def get_icon_img(icon):
     """
     Devuelve la url de la imagen del icono
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/img/profileicon/{}".format(str(saved_version), str(icon))
     return url
 
@@ -159,7 +158,7 @@ def get_all_runes_data(lang=DEF_LANG):
     """
     Devuelve la lista de runas
     """
-    saved_version = get_saved_version()
+    saved_version = get_current_version()
     url = "https://ddragon.leagueoflegends.com/cdn/{}/data/{}/runesReforged.json".format(saved_version, lang)
     r = requests.get(url)
     return r.json()

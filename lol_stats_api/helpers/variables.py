@@ -37,7 +37,7 @@ SERVER_ROUTES={
     "RU":"ru.api.riotgames.com"
 }
 
-RANKED_QUEUES=[420]
+RANKED_QUEUES=[420,440]
 
 SERVER_REAL_NAME_TO_ROUTE={
     "BR1":"BR",
@@ -63,6 +63,9 @@ PLAYSTYLE_STATS_KEYS = [
 ]
 
 HIGH_ELO_TIERS = ["DIAMOND","PLATINUM","challengers","masters","grandmasters"]
+LOW_ELO_TIERS = ["GOLD","SILVER","BRONZE","IRON"]
+POST_DIAMOND_TIERS=["challengers","masters","grandmasters"]
+PRE_DIAMOND_TIERS = ['IRON',"BRONZE","SILVER","GOLD","PLATINUM","DIAMOND"]
 
 
 # =================================
@@ -86,9 +89,14 @@ jungle_items = df_items.loc[(df_items['name'].astype(str).str.contains("Encantam
 # =============================
 # Csv preprocess de datos
 # =============================
-league_data_route=path.join(settings.PREPROCESS_PATH, "league_data.json")
-player_sample_route=path.join(settings.PREPROCESS_PATH, "player_sample.csv")
-matches_sample_route=path.join(settings.PREPROCESS_PATH, "matches_sample.csv")
-champ_ban_file=path.join(settings.PREPROCESS_PATH, "champ_ban.csv")
-champ_data_file=path.join(settings.PREPROCESS_PATH, "champ_data.csv")
-playstyle_data_file=path.join(settings.PREPROCESS_PATH, "playstyle_data.csv")
+saved_players_route = path.join(settings.PREPROCESS_PATH,"saved" ,"players.csv")
+saved_matches_route = path.join(settings.PREPROCESS_PATH,"saved" ,"matches.csv")
+saved_champ_ban_route = path.join(settings.PREPROCESS_PATH,"saved" ,"champbans.csv")
+saved_champ_data_route = path.join(settings.PREPROCESS_PATH,"saved" ,"champdata.csv")
+saved_playstyle_route = path.join(settings.PREPROCESS_PATH,"saved" ,"playstyle.csv")
+
+temp_players_route = path.join(settings.PREPROCESS_PATH,"temp" ,"players.csv")
+temp_matches_route = path.join(settings.PREPROCESS_PATH,"temp" ,"matches.csv")
+temp_champ_ban_route = path.join(settings.PREPROCESS_PATH,"temp" ,"champbans.csv")
+temp_champ_data_route = path.join(settings.PREPROCESS_PATH,"temp" ,"champdata.csv")
+temp_playstyle_route = path.join(settings.PREPROCESS_PATH,"temp" ,"playstyle.csv")

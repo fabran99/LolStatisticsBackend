@@ -25,7 +25,7 @@ SECRET_KEY = 'vdpv^vsdz64le4bcr!ttqg$7)%d)_dywjwnf(*le0wvwdfh@mn'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -38,6 +38,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
+    'django_celery_beat',
+    'stats',
+    'lol_stats_api',
+    'assets'
 ]
 
 MIDDLEWARE = [
@@ -48,7 +53,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
+
+
+CORS_ORIGIN_ALLOW_ALL = True 
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'lol_stats_api.urls'
 
@@ -125,4 +136,13 @@ API_KEY = os.getenv("API_KEY", None)
 DEF_LANGUAGE = os.getenv("DEF_LANGUAGE", None)
 MONGO_DB_HOST = os.getenv("MONGO_DB_HOST", None)
 
-PREPROCESS_PATH = os.path.join(os.path.split(BASE_DIR)[0] ,"preprocess")
+PREPROCESS_PATH = os.getenv("PREPROCESS_PATH")
+
+# Celery
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_TIMEZONE = "Etc/UTC"
+CELERY_BROKER_URL='redis://{}:{}/{}'.format(os.getenv("CELERY_HOST"), os.getenv("CELERY_PORT"), os.getenv("CELERY_DB"))
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
