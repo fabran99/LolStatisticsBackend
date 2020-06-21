@@ -23,7 +23,9 @@ def get_main_list():
         "tags":1,
         "key":1,
         "lore":1,
-        "id":1
+        "id":1,
+        "allytips":1,
+        "enemytips":1
     }
 
     stats_dict = {
@@ -42,7 +44,9 @@ def get_main_list():
         "championId":1,
         "lane":1,
         "spells":1,
-        'champName':1
+        'champName':1,
+        'strongAgainst':1,
+        "weakAgainst":1
     }
 
     champ_list = {}
@@ -79,6 +83,8 @@ def get_main_list():
             "tags":champ['tags'],
             'key':champ['id'],
             'lore':champ['lore'],
+            'allyTips':champ['allytips'],
+            'enemyTips':champ['enemytips'],
         }
     for stat in stats_cursor:
         if not str(stat['championId']) in champ_list:
@@ -106,7 +112,9 @@ def get_main_list():
             "damageTypes":stat['stats']['high_elo']['damageTypes'],
             "build":stat['build'],
             "runes":stat['runes'],
-            "spells":stat['spells']
+            "spells":stat['spells'],
+            "strongAgainst":stat['strongAgainst'],
+            "weakAgainst":stat['weakAgainst']
         })
 
     final_list = []

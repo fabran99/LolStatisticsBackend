@@ -100,3 +100,47 @@ temp_matches_route = path.join(settings.PREPROCESS_PATH,"temp" ,"matches.csv")
 temp_champ_ban_route = path.join(settings.PREPROCESS_PATH,"temp" ,"champbans.csv")
 temp_champ_data_route = path.join(settings.PREPROCESS_PATH,"temp" ,"champdata.csv")
 temp_playstyle_route = path.join(settings.PREPROCESS_PATH,"temp" ,"playstyle.csv")
+
+
+# Sample de jugadores
+player_sample = {
+        "DIAMOND":{
+            "I":600,
+            "II":600,
+            "III":600,
+            "IV":600
+        },
+        "challengers":300,
+        "masters":300,
+        "grandmasters":300,
+        "PLATINUM":{
+            "I":600,
+            "II":600,
+            "III":600,
+            "IV":600
+        },
+        "GOLD":{
+            "I":65,
+            "II":65,
+            "III":65,
+            "IV":65
+        },
+        "SILVER":{
+            "I":65,
+            "II":65,
+            "III":65,
+            "IV":65
+        },
+        "BRONZE":{
+            "I":65,
+            "II":65,
+            "III":65,
+            "IV":65
+        },
+        "IRON":{
+            "I":65,
+            "II":65,
+            "III":65,
+            "IV":65
+        },
+    }

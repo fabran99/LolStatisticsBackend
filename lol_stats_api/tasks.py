@@ -5,6 +5,7 @@ from redis import Redis
 import os
 from datetime import datetime as dt, timedelta
 from stats import stats_functions
+from lol_stats_api.helpers.variables import player_sample
 
 db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
 
@@ -19,16 +20,16 @@ def check_last_update():
     """
     last_update_date = db_metadata.get("last_update_date")
 
-    db_metadata.set("running","0")
-
     if not last_update_date:
         print("not last update")
+        db_metadata.set("running","0")
         update_stats_with_celery.delay()
         return
     current_time = int(dt.now().timestamp())
-    td = timedelta(hours=10).total_seconds()
+    td = timedelta(hours=15).total_seconds()
     if current_time - int(last_update_date) >= td:
         print(current_time - int(last_update_date))
+        db_metadata.set("running","0")
         update_stats_with_celery.delay()
 
 
@@ -47,6 +48,8 @@ def update_stats_with_celery():
     """
     Manda a actualizar las stats
     """
-    stats_functions.process_stats()
-
-
+    try:
+        stats_functions.process_stats()
+    except Exception as e:
+        print(e)
+        db_metadata.set("running","0")

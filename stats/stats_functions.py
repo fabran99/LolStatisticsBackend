@@ -6,6 +6,7 @@ from lol_stats_api.helpers.variables import HIGH_ELO_TIERS, LOW_ELO_TIERS, PRE_D
 
 from lol_stats_api.helpers.variables import saved_players_route, saved_matches_route, saved_champ_ban_route, saved_champ_data_route, saved_playstyle_route
 from lol_stats_api.helpers.variables import temp_players_route, temp_matches_route, temp_champ_ban_route, temp_champ_data_route, temp_playstyle_route
+from lol_stats_api.helpers.variables import player_sample
 
 from .calculations import generate_builds_stats_by_champ
 
@@ -26,6 +27,7 @@ from assets.load_data import load_data
 from lol_stats_api.helpers.mongodb import get_saved_version
 from assets.ddragon_routes import get_current_version
 from redis import Redis
+from lol_stats_api import tasks
 
 db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
 
@@ -112,20 +114,29 @@ def get_player_data(leagueData=def_sample, servers=SERVER_ROUTES.keys()):
             elif key in PRE_DIAMOND_TIERS:
                 for div, div_num in value.items():
                     print("{} {} en {}".format(key, div, server) )
-                    data = get_player_list_by_division(key, div, server)
+                    page = 1
 
-                    if data is None:
-                        continue
+                    if key in ["DIAMOND","PLATINUM"]:
+                        page = 3
 
-                    df_data = pd.DataFrame(data)[['summonerId',"summonerName","rank","tier","inactive"]]
-                    df_data = df_data.loc[~(df_data['inactive'])]
-                    df_data['server']=server
+                    while page > 0:
+                        data = get_player_list_by_division(key, div, server, page=str(page))
+                        if data is None:
+                            page= page-1
+                            continue
+                        if len(data) == 0:
+                            page= page-1
+                            continue
+                        df_data = pd.DataFrame(data)[['summonerId',"summonerName","rank","tier","inactive"]]
+                        df_data = df_data.loc[~(df_data['inactive'])]
+                        df_data['server']=server
 
-                    sample = min(div_num, len(df_data))
-                    df_data=df_data.sample(sample)
+                        sample = min(div_num, len(df_data))
+                        df_data=df_data.sample(sample)
 
-                    player_frame=player_frame.append(df_data, ignore_index=True)
-                    player_frame.reset_index(drop=True)
+                        player_frame=player_frame.append(df_data, ignore_index=True)
+                        player_frame.reset_index(drop=True)
+                        page = page-1
 
     get_player_detail(player_frame)
 
@@ -386,51 +397,10 @@ def get_stats_from_matches(min_date=x_days_ago(3)):
 
 
 def process_stats(force=False):
-    sample = {
-        "challengers":300,
-        "masters":300,
-        "grandmasters":300,
-        "DIAMOND":{
-            "I":120,
-            "II":120,
-            "III":120,
-            "IV":120
-        },
-        "PLATINUM":{
-            "I":120,
-            "II":120,
-            "III":120,
-            "IV":120
-        },
-        "GOLD":{
-            "I":80,
-            "II":80,
-            "III":80,
-            "IV":80
-        },
-        "SILVER":{
-            "I":80,
-            "II":80,
-            "III":80,
-            "IV":80
-        },
-        "BRONZE":{
-            "I":80,
-            "II":80,
-            "III":80,
-            "IV":80
-        },
-        "IRON":{
-            "I":80,
-            "II":80,
-            "III":80,
-            "IV":80
-        },
-    }
-
     # Si se actualizo hace menos de 1 hora
     last_update_date = db_metadata.get("last_update_date")
     running = db_metadata.get("running")
+    print(int(running), int(running)==1)
     
     if last_update_date:
         current_time = int(dt.now().timestamp())
@@ -453,22 +423,23 @@ def process_stats(force=False):
     min_date = x_days_ago(3)
     # Pido un sample nuevo de jugadores cuando cambie el parche o cuando no los tenga
     player_sample_frac = 1
-    total_matches = 7000
+    total_matches = 10000
     if is_new_patch() or not has_saved_players():
-        get_player_data(leagueData=sample)
-        total_matches = 60000
+        get_player_data(leagueData=player_sample)
+        total_matches = 20000
 
     # Inicio peticion de datos
     begin_time = get_begin_time()
     end_time = x_days_ago(0)
+    
     get_matches_samples_from_player_list(sample_frac = player_sample_frac, begin_time=begin_time, end_time = end_time, total_matches=total_matches, max_from_same_player=30, min_date=min_date)
 
     get_stats_from_matches(min_date=min_date)
+    current_time = dt.now().timestamp()
     load_data()
     generate_builds_stats_by_champ()
-    
+
     # Seteo info para el siguiente update
-    current_time = dt.now().timestamp()
     db_metadata.set("last_update_date", int(current_time))
     db_metadata.set("running", 0)
 

@@ -108,7 +108,7 @@ def get_leagues_by_player_id(id, region):
     return get_data_or_none(url)
 
 
-def get_player_list_by_division(tier,division,region):
+def get_player_list_by_division(tier,division,region, page="1"):
     """
     Devuelve el top 100 de jugadores para una division en una liga
     """
@@ -116,7 +116,7 @@ def get_player_list_by_division(tier,division,region):
     if tier not in TIERS or division not in DIVISIONS:
         return None
 
-    url = "https://{}/lol/league/v4/entries/RANKED_SOLO_5x5/{}/{}?page=1".format(SERVER_ROUTES[region],tier,division)
+    url = "https://{}/lol/league/v4/entries/RANKED_SOLO_5x5/{}/{}?page={}".format(SERVER_ROUTES[region],tier,division,page)
     return get_data_or_none(url)
 
 

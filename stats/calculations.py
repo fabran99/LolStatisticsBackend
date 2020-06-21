@@ -72,6 +72,14 @@ def generate_builds_stats_by_champ():
 
     radar_rates = {x:[] for x in df_by_elo.keys() }
     champKeys = {}
+
+    byLane = {
+    "Top":[],
+    "Mid":[],
+    "Jungla":[],
+    "Support":[],
+    "ADC":[]
+    }
     
     for champ in champs:
         print("Estadisticas de {}".format(champs_by_id[str(champ)]['name']))
@@ -92,6 +100,7 @@ def generate_builds_stats_by_champ():
         # Estadisticas generales
         
         final_data['lane']=get_lane_from_role({"role":str(role),"lane":str(lane)})
+        byLane[final_data['lane']].append(champ)
         final_data.update(generate_champ_data(data, final_data['lane']))
 
         for elo, data in df_by_elo.items():
@@ -140,32 +149,27 @@ def generate_builds_stats_by_champ():
         general_stats.append(final_data)
 
 
-    # Counters
-    byLane = {
-    "Top":[],
-    "Mid":[],
-    "Jungla":[],
-    "Support":[],
-    "ADC":[]
-    }
-
-    for x in byLane.keys():
-        byLane[x] = [y['championId'] for y in general_stats if y['lane']==x]
-
     for champ in champs:
-        counterDict[champ]={
-            'counters':[],
-            'counterBy':[]
-        }
-        lane = general_stats[champKeys[champ]]
+        lane = general_stats[champKeys[champ]]['lane']
+        champsInLane = byLane[lane]
+        percents = []
 
-        counters = counterDf.loc[counterDf['winner']==champ]['looser'].value_counts().index.tolist()
-        print(counters)
-        return False
+        for x in champsInLane:
+            total = counterDf.loc[((counterDf['winner']==x) & (counterDf['looser']==champ)) | ((counterDf['winner']==champ) & (counterDf['looser']==x))]
+            if len(total) == 0:
+                continue
+            win = len(counterDf.loc[(counterDf['winner']==champ) & (counterDf['looser']==x)])
+            percents.append({
+                "champ":x,
+                "winRate": win*100/len(total)
+            })
 
+        winrate=pd.DataFrame(percents).sort_values("winRate")
+        general_stats[champKeys[champ]]['strongAgainst']=winrate.tail(3)['champ'].tolist()
+        general_stats[champKeys[champ]]['weakAgainst']=winrate.head(3)['champ'].tolist()
+        
 
-
-
+    # stats para grafica radar
     radar_stats = []
 
     for key, value in radar_rates.items():
@@ -430,7 +434,7 @@ def get_farm(data):
 def get_counters(data):
     gameIds = data['gameId'].unique()
     counterList = []
-
+    print("Calculando counters...")
     for gameId in gameIds:
         durations = data.loc[data['gameId']==gameId]['gameDuration'].unique()
         for duration in durations:

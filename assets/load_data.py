@@ -328,7 +328,7 @@ def load_rune_data(clean_load=False):
         "id":5008,
         "name":"Adaptive",
         "image":"http://ddragon.leagueoflegends.com/cdn/img/perk-images/StatMods/StatModsAdaptiveForceIcon.png",
-        "description":"+1-10% de RDE"
+        "description":"+9 de fuerza adaptable"
     }]
 
     for perk in perks:
