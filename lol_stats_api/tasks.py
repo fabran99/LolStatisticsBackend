@@ -34,7 +34,7 @@ def check_last_update():
 
 
 @periodic_task(name="automatically_update_stats",
-    run_every=(crontab(hour='20,0,5,10,15', minute='0'))
+    run_every=(crontab(hour='18,1,6,12', minute='0'))
 )
 def automatically_update_stats():
     """
