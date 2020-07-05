@@ -2,16 +2,32 @@ import pymongo
 from django.conf import settings
 from monary import Monary
 
-
-def get_mongo_assets():
+def get_mongo():
     """
-    Devuelve conexion con mongodb de assets
+    Devuelve conexion con mongodb
     """
     client = pymongo.MongoClient(
         host=settings.MONGO_DB_HOST,
         port=27017
     )
+    return client
+
+
+def get_mongo_assets():
+    """
+    Devuelve conexion con mongodb de assets
+    """
+    client = get_mongo()
     mongodb = client.assets
+    return mongodb
+
+
+def get_mongo_players():
+    """
+    Devuelve conexion con mongodb de jugadores
+    """
+    client = get_mongo()
+    mongodb = client.players
     return mongodb
 
 
@@ -23,15 +39,11 @@ def get_monary():
     return client
 
 
-
 def get_mongo_stats():
     """
     Devuelve conexion con mongodb de datos
     """
-    client = pymongo.MongoClient(
-        host=settings.MONGO_DB_HOST,
-        port=27017
-    )
+    client = get_mongo()
     mongodb = client.statistics
     return mongodb
 

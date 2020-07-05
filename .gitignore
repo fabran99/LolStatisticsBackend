@@ -4,3 +4,5 @@ __pycache__
 /notebooks
 *.pyc
 celerybeat.pid
+
+.pyc

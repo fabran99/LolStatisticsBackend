@@ -6,50 +6,34 @@ import os
 from datetime import datetime as dt, timedelta
 from stats import stats_functions
 from lol_stats_api.helpers.variables import player_sample
+from stats import get_players
+from stats import get_matches
 
 db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
 
 
-@periodic_task(name="check_last_update",
-    run_every=(crontab(hour='20,1,8,13', minute='5'))
+@periodic_task(name="update_player_list",
+    run_every=(crontab(day_of_week='1,4',hour="3" ,minute='5'))
 )
-def check_last_update():
+def periodically_update_player_list():
     """
-    Checkea la ultima hora de actualizacion, si pasaron mas de 6 horas, entonces
-    mando a actualizar
+    Actualiza periodicamente la lista de jugadores
     """
-    last_update_date = db_metadata.get("last_update_date")
-
-    if not last_update_date:
-        print("not last update")
-        db_metadata.set("running","0")
-        update_stats_with_celery.delay()
-        return
-    current_time = int(dt.now().timestamp())
-    td = timedelta(hours=15).total_seconds()
-    if current_time - int(last_update_date) >= td:
-        print(current_time - int(last_update_date))
-        db_metadata.set("running","0")
-        update_stats_with_celery.delay()
+    get_players.update_player_list()
 
 
-@periodic_task(name="automatically_update_stats",
-    run_every=(crontab(hour='18,1,6,12', minute='0'))
-)
-def automatically_update_stats():
+@task(name="update_players")
+def update_player_detail_in_celery(current_player):
     """
-    Manda a actualizar las stats cada 5 horas
+    Actualiza la informacion de un jugador
     """
-    update_stats_with_celery.delay()
+    get_players.update_player_detail(current_player)
 
 
-@task(name="update_stats")
-def update_stats_with_celery():
+@task(name="process_match")
+def process_match_with_celery(match):
     """
-    Manda a actualizar las stats
+    Procesa una partida con celery
     """
-    try:
-        stats_functions.process_stats()
-    except Exception as e:
-        print(e)
-        db_metadata.set("running","0")
+    get_matches.process_match(match)
+    

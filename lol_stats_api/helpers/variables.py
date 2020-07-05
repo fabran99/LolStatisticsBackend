@@ -105,42 +105,42 @@ temp_playstyle_route = path.join(settings.PREPROCESS_PATH,"temp" ,"playstyle.csv
 # Sample de jugadores
 player_sample = {
         "DIAMOND":{
-            "I":600,
-            "II":600,
-            "III":600,
-            "IV":600
+            "I":400,
+            "II":400,
+            "III":400,
+            "IV":400
         },
         "challengers":300,
         "masters":300,
         "grandmasters":300,
         "PLATINUM":{
-            "I":600,
-            "II":600,
-            "III":600,
-            "IV":600
+            "I":400,
+            "II":400,
+            "III":400,
+            "IV":400
         },
         "GOLD":{
-            "I":65,
-            "II":65,
-            "III":65,
-            "IV":65
+            "I":100,
+            "II":100,
+            "III":100,
+            "IV":100
         },
         "SILVER":{
-            "I":65,
-            "II":65,
-            "III":65,
-            "IV":65
+            "I":100,
+            "II":100,
+            "III":100,
+            "IV":100
         },
         "BRONZE":{
-            "I":65,
-            "II":65,
-            "III":65,
-            "IV":65
+            "I":100,
+            "II":100,
+            "III":100,
+            "IV":100
         },
         "IRON":{
-            "I":65,
-            "II":65,
-            "III":65,
-            "IV":65
+            "I":100,
+            "II":100,
+            "III":100,
+            "IV":100
         },
     }

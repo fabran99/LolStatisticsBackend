@@ -145,4 +145,4 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_TIMEZONE = "Etc/UTC"
 CELERY_BROKER_URL='redis://{}:{}/{}'.format(os.getenv("CELERY_HOST"), os.getenv("CELERY_PORT"), os.getenv("CELERY_DB"))
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_RESULT_BACKEND = 'redis://{}:{}/{}'.format(os.getenv("CELERY_HOST"), os.getenv("CELERY_PORT"), os.getenv("CELERY_RESULT_DB"))
