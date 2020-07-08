@@ -18,7 +18,7 @@ def process_match_for_each_key():
     number = 1 if len(db_matchlist.keys()) > 5 else 5
     for server in db_matchlist.keys():
         for i in range(number):
-            match = db_matchlist.rpop(server)
+            match = db_matchlist.lpop(server)
             if match is None:
                 break
             data_match = json.loads(match)
@@ -37,7 +37,7 @@ class Command(BaseCommand):
             els = db_celery.llen('celery') 
             if els > 50:
                 print("Esperando a que la cola se vacie - {} elementos".format(els))
-                sleep(50)
+                sleep(10)
                 continue
             else:
                 process_match_for_each_key()

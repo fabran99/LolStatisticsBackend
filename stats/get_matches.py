@@ -73,7 +73,7 @@ def get_matches_sample_from_player_list(server="LAS"):
 
     for index, row in df.iterrows():
         print("Trayendo partidas de {} ({}) {} de {}".format(row['accountId'], server, str(index+1), str(len(df))))
-        begin_time = x_days_ago(3)
+        begin_time = x_days_ago(2.8)
 
         if row['last_time_searched'] is not None and not np.isnan(row['last_time_searched']):
             begin_time = max(row['last_time_searched'], begin_time)
@@ -160,7 +160,7 @@ def process_match(match):
         if match['retries']>=3:
             return
         else:
-            db_matchlist.lpush(server, json.dumps(match))
+            db_matchlist.rpush(server, json.dumps(match))
             return
 
     bans = []

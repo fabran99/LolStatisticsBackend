@@ -44,6 +44,7 @@ def monary_array_to_df(arrays, columns, column_types):
         
     return df
 
+
 def correct_string_data(df):
     if 'role' in df.columns:
         roles = ["DUO_SUPPORT", "DUO_CARRY","SOLO", "NONE"]
@@ -65,7 +66,6 @@ def correct_string_data(df):
     
     return df
         
-
 
 def get_champ_data_df(tier):
     """
@@ -137,8 +137,6 @@ def get_playstyle_df(tier):
 
     champ_playstyle_df = correct_string_data(champ_playstyle_df)
     return champ_playstyle_df
-
-
 
 
 def generate_builds_stats_by_champ():
