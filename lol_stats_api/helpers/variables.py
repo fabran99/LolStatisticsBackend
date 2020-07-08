@@ -144,3 +144,58 @@ player_sample = {
             "IV":100
         },
     }
+
+
+
+lane_name_to_n = {
+    "BOTTOM":1,
+    "JUNGLE":2,
+    "MIDDLE":3,
+    "TOP":4
+}
+lane_n_to_name = {
+    1:"BOTTOM",
+    2:"JUNGLE",
+    3:"MIDDLE",
+    4:"TOP"
+}
+
+role_name_to_n={
+    "DUO":1,
+    "DUO_CARRY":2,
+    "DUO_SUPPORT":3,
+    "NONE":4,
+    "SOLO":5
+}
+role_n_to_name={
+    1:"DUO",
+    2:"DUO_CARRY",
+    3:"DUO_SUPPORT",
+    4:"NONE",
+    5:"SOLO"
+}
+
+
+tier_name_to_n={
+'IRON':1,
+"BRONZE":2,
+"SILVER":3,
+"GOLD":4,
+"PLATINUM":5,
+"DIAMOND":6,
+"masters":7,
+"grandmasters":8,
+"challengers":9,
+}
+
+tier_n_to_name={
+'IRON':1,
+"BRONZE":2,
+"SILVER":3,
+"GOLD":4,
+"PLATINUM":5,
+"DIAMOND":6,
+"masters":7,
+"grandmasters":8,
+"challengers":9,
+}

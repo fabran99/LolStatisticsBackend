@@ -14,7 +14,7 @@ class Command(BaseCommand):
         while True:
             try:
                 get_matches_sample_from_player_list(server)
-                sleep(120)
+                sleep(7200)
             except Exception as e:
                 print(e)
             

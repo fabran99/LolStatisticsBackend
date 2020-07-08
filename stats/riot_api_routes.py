@@ -86,6 +86,14 @@ def get_matchlist_by_account_id(id, region, only_ranked=False, endIndex=100,begi
     return response['matches']
 
 
+def get_timelist_by_match_id(id, region):
+    """
+    Devuelve la timeline de una partida
+    """
+    url = "https://{}/lol/match/v4/timelines/by-match/{}".format(SERVER_ROUTES[region], str(id))
+    return get_data_or_none(url)
+
+
 # Masteries
 def get_champ_masteries_by_player_id(id,region):
     """

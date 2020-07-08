@@ -14,7 +14,7 @@ from lol_stats_api.helpers.variables import SERVER_REAL_NAME_TO_ROUTE, RANKED_QU
 from lol_stats_api.helpers.variables import DIVISIONS, TIERS
 from lol_stats_api.helpers.variables import SERVER_ROUTES, SERVER_REAL_NAME_TO_ROUTE
 from lol_stats_api.helpers.variables import MATCHES_STATS_KEYS,PLAYSTYLE_STATS_KEYS
-from stats.riot_api_routes import get_matchlist_by_account_id, get_match_by_id
+from stats.riot_api_routes import get_matchlist_by_account_id, get_match_by_id, get_timelist_by_match_id
 from lol_stats_api import tasks
 
 db_players = get_mongo_players()
@@ -27,17 +27,8 @@ db_processed_match = Redis(db=os.getenv("REDIS_GAMEID_PROCESSED_DB"))
 monary_db = get_monary()
 
 # Variables generales
-columns = ['rank', 'tier', 'accountId',"last_time_searched","last_match_number","_id"]
-column_types = ["string:15","string:15", "string:60", "date", "uint32","id"]
-
-
-
-def get_begin_time(server):
-    data = db_metadata.get("last_end_time_{}".format(server))
-    if data is not None:
-        return int(data)
-    else:
-        return x_days_ago(3)
+columns = ['rank', 'tier', 'accountId',"last_time_searched","last_match_number","_id","zero_matches_number"]
+column_types = ["string:15","string:15", "string:60", "uint64", "uint32","id","uint32"]
     
 
 def x_days_ago(days):
@@ -61,10 +52,6 @@ def get_matches_sample_from_player_list(server="LAS"):
     """
     Pide partidas en un rango de fechas para los jugadores de un server concreto, y las agrega a la lista de redis
     """
-    # Manejo las fechas
-    end_time = x_days_ago(0)
-    begin_time = get_begin_time(server)
-
     # Pido la lista de jugadores con este server
     query = {
         "server": server
@@ -74,33 +61,52 @@ def get_matches_sample_from_player_list(server="LAS"):
     df = monary_array_to_df(arrays)
 
     df = df.loc[df['accountId'].notna()]
-    df = df.sort_values(['last_time_searched','last_match_number'], ascending=[True,False]).reset_index(drop=True)
+    df = df.sort_values(['last_time_searched'], ascending=True).reset_index(drop=True)
 
+    # Rearmo el df para que priorice los que mas tiempo paso desde que se buscaron, y ademas que tengan mas partidas encontradas
+    half_rows = round(len(df)/2)
+    oldest_searched = df.head(half_rows)
+    newest_searched = df.tail(half_rows)
+
+    oldest_searched = oldest_searched.sort_values(['last_match_number'], ascending=False)
+    df = oldest_searched.append(newest_searched).reset_index(drop=True)
 
     for index, row in df.iterrows():
         print("Trayendo partidas de {} ({}) {} de {}".format(row['accountId'], server, str(index+1), str(len(df))))
+        begin_time = x_days_ago(3)
 
+        if row['last_time_searched'] is not None and not np.isnan(row['last_time_searched']):
+            begin_time = max(row['last_time_searched'], begin_time)
+
+        end_time = x_days_ago(0)
+        
         # Traigo la lista de datos
         game_list = get_matchlist_by_account_id(row['accountId'],server, only_ranked=True, endIndex=20, beginTime=begin_time, endTime=end_time)
         
         # Actualizo la cantidad de partidas del jugador
-        time_searched = x_days_ago(0)
         match_number = 0
         if game_list is not None:
             match_number = len(game_list)
 
         print("{} partidas encontradas".format(str(match_number)))
-
-        # Si llevo dos iteraciones y el jugador no tiene partidas, lo quito
-        if str(row['last_match_number']) == "0" and match_number ==0:
-            print("Borrando jugador, 2 pasadas sin partidas")
+        # Si llevo 5 iteraciones y el jugador no tiene partidas, lo quito
+        if match_number == 0 and not np.isnan(row['zero_matches_number']) and int(row['zero_matches_number']) > 5:
+            print("Borrando jugador, 6 pasadas sin partidas\n")
             db_players.player_list.remove({"_id":ObjectId(row['_id'])})
             continue
+
+        zero_matches_number = int(row['zero_matches_number']) if not np.isnan(row['zero_matches_number']) else 0
+        
+        if match_number == 0:
+            zero_matches_number+=1
+        else:
+            zero_matches_number = 0
 
         update={
             "$set":{
                 "last_match_number":match_number,
-                "last_time_searched":time_searched
+                "last_time_searched":end_time,
+                "zero_matches_number":zero_matches_number,
             }
         }
 
@@ -119,7 +125,17 @@ def get_matches_sample_from_player_list(server="LAS"):
                 # tasks.process_match_with_celery.delay(x)
 
     # Actualizo la fecha final
-    db_metadata.set("last_end_time_{}".format(server), end_time)
+    # db_metadata.set("last_end_time_{}".format(server), end_time)
+
+
+def is_jungler(participant):
+    """
+    Returna si el participante es jungla o no
+    """
+    if 11 in [participant['spell1Id'], participant['spell2Id']] and participant['lane'] in ['JUNGLE','NONE']:
+        return True
+
+    return False
 
 
 def process_match(match):
@@ -127,7 +143,9 @@ def process_match(match):
     Procesa una partida y guarda sus datos en mongo
     """
     match = json.loads(match)
-    if db_processed_match.get(match['gameId']) is not None:
+    timestamp = x_days_ago(3)
+    # Datos ya procesados o de hace mas de 3 dias los ignoro
+    if db_processed_match.get(match['gameId']) is not None or match['timestamp']<=timestamp:
         return 
     server = SERVER_REAL_NAME_TO_ROUTE[match['platformId']]
     match_detail = get_match_by_id(match['gameId'], server)
@@ -148,6 +166,8 @@ def process_match(match):
     bans = []
     c_data = []
     c_pstyle = []
+
+    jungler_list = []
 
     # Manejo bans de la partida
     for team in match_detail['teams']:
@@ -184,6 +204,8 @@ def process_match(match):
             "participantId":participant['participantId'],
             "timestamp":match["timestamp"]
         }
+        if is_jungler(data):
+            jungler_list.append(data)
 
         for x in MATCHES_STATS_KEYS:
             if x in participant['stats']:
@@ -210,6 +232,47 @@ def process_match(match):
                 playstyle[x]=participant['stats'][x]
 
         c_pstyle.append(playstyle)
+
+
+    # Trato de traer la lista de timeline
+    if len(jungler_list) > 0:
+        timelist_data = get_timelist_by_match_id(match['gameId'],server)
+        timelist_stats = []
+        print("Pidiendo timelines de los junglas")
+        if timelist_data is None:
+            sleep(10)
+            timelist_data = get_timelist_by_match_id(match['gameId'],server)
+        
+        if timelist_data and 'frames' in timelist_data:
+            counter = 0
+            for timelist_frame in timelist_data['frames']:
+                # Obtengo los primeros 4 minutos
+                counter+=1
+                if counter > 4:
+                    break
+                
+                for jungler in jungler_list:
+                    frame = {
+                        'timestamp':(counter * 60000) - 60000,
+                        'teamId':jungler['teamId'],
+                        'tier':jungler['tier'],
+                        'championId':jungler['championId'],
+                        'gameTimestamp':jungler['timestamp']
+                    }
+                    for i, participant in timelist_frame['participantFrames'].items():
+                        if int(participant['participantId']) == int(jungler['participantId']):
+                            try:
+                                frame.update({
+                                "x":participant['position']['x'],
+                                "y":participant['position']['y']
+                                })
+                                timelist_stats.append(frame)
+                            except:
+                                pass
+                            break
+            if len(timelist_stats) > 0:
+                print("Inserto timelines de los junglas")
+                db_stats.timelines.insert_many(timelist_stats)
 
     # Inserto en la base
     print("Insertando datos de la partida en la base de datos")
