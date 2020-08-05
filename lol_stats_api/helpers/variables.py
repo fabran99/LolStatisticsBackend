@@ -13,6 +13,8 @@ ARAM = {
     "mapId":"12"
 }
 
+SMITE_SUMM = 11
+
 MAIN_GAMEMODE="CLASSIC"
 GAME_TYPE="MATCHED_GAME"
 
@@ -86,22 +88,6 @@ support_items =  df_items.loc[((df_items['tags'].astype(str).str.contains("GoldP
 jungle_items = df_items.loc[(df_items['name'].astype(str).str.contains("Encantamiento"))]['id'].unique()
 
 
-# =============================
-# Csv preprocess de datos
-# =============================
-saved_players_route = path.join(settings.PREPROCESS_PATH,"saved" ,"players.csv")
-saved_matches_route = path.join(settings.PREPROCESS_PATH,"saved" ,"matches.csv")
-saved_champ_ban_route = path.join(settings.PREPROCESS_PATH,"saved" ,"champbans.csv")
-saved_champ_data_route = path.join(settings.PREPROCESS_PATH,"saved" ,"champdata.csv")
-saved_playstyle_route = path.join(settings.PREPROCESS_PATH,"saved" ,"playstyle.csv")
-
-temp_players_route = path.join(settings.PREPROCESS_PATH,"temp" ,"players.csv")
-temp_matches_route = path.join(settings.PREPROCESS_PATH,"temp" ,"matches.csv")
-temp_champ_ban_route = path.join(settings.PREPROCESS_PATH,"temp" ,"champbans.csv")
-temp_champ_data_route = path.join(settings.PREPROCESS_PATH,"temp" ,"champdata.csv")
-temp_playstyle_route = path.join(settings.PREPROCESS_PATH,"temp" ,"playstyle.csv")
-
-
 # Sample de jugadores
 player_sample = {
         "DIAMOND":{
@@ -146,18 +132,32 @@ player_sample = {
     }
 
 
+division_name_to_n = {
+    "I":1,
+    "II":2,
+    "III":3,
+    "IV":4
+}
+division_n_to_name = {
+    1:"I",
+    2:"II",
+    3:"III",
+    4:"IV"
+}
 
 lane_name_to_n = {
     "BOTTOM":1,
     "JUNGLE":2,
     "MIDDLE":3,
-    "TOP":4
+    "TOP":4,
+    "NONE":5
 }
 lane_n_to_name = {
     1:"BOTTOM",
     2:"JUNGLE",
     3:"MIDDLE",
-    4:"TOP"
+    4:"TOP",
+    5:"NONE"
 }
 
 role_name_to_n={
@@ -189,13 +189,25 @@ tier_name_to_n={
 }
 
 tier_n_to_name={
-'IRON':1,
-"BRONZE":2,
-"SILVER":3,
-"GOLD":4,
-"PLATINUM":5,
-"DIAMOND":6,
-"masters":7,
-"grandmasters":8,
-"challengers":9,
+1:"IRON",
+2:"BRONZE",
+3:"SILVER",
+4:"GOLD",
+5:"PLATINUM",
+6:"DIAMOND",
+7:"masters",
+8:"grandmasters",
+9:"challengers"
 }
+
+
+# Crontabs
+cron_players={
+    "day_of_week":'0,2,4',
+    "hour":"4",
+    "minute":"38",
+    "day_of_month":"*",
+    "month_of_year":"*"
+}
+cron_players_text = "{} {} {} {} {}".format(cron_players['minute'], cron_players['hour'], \
+    cron_players['day_of_month'], cron_players['month_of_year'], cron_players['day_of_week'])

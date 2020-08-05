@@ -1,10 +1,12 @@
-from .riot_api_routes import *
+from stats.riot_api_routes import *
 from lol_stats_api.helpers.variables import SERVER_ROUTES, SERVER_REAL_NAME_TO_ROUTE
 from lol_stats_api.helpers.variables import DIVISIONS, TIERS, HIGH_ELO_TIERS, LOW_ELO_TIERS, POST_DIAMOND_TIERS, PRE_DIAMOND_TIERS
 from lol_stats_api.helpers.variables import GAME_TYPE,MAIN_GAMEMODE,RANKED_QUEUES
 from lol_stats_api.helpers.variables import MATCHES_STATS_KEYS,PLAYSTYLE_STATS_KEYS, HIGH_ELO_TIERS
 from lol_stats_api.helpers.variables import df_items, trinkets, final_form_items, boots, support_items, jungle_items
-from lol_stats_api.helpers.variables import saved_players_route, saved_champ_ban_route, saved_champ_data_route, saved_playstyle_route
+from lol_stats_api.helpers.variables import tier_n_to_name, role_n_to_name, division_n_to_name, lane_n_to_name, tier_name_to_n, lane_name_to_n,\
+    role_name_to_n, division_name_to_n
+
 
 from assets.get_assets_mongodb import *
 from lol_stats_api.helpers.mongodb import get_mongo_stats, get_monary
@@ -19,51 +21,46 @@ from datetime import datetime as dt
 import pandas as pd
 import numpy as np
 from time import sleep
+from redis import Redis
 
 champs_by_id = get_all_champs_name_id()
 from lol_stats_api.helpers.mongodb import get_saved_version
 from assets.ddragon_routes import get_current_version
-from lol_stats_api import tasks
+# from lol_stats_api import tasks
+
+db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
 
 stats_db = get_mongo_stats()
 monary_db =  get_monary()
 
 def monary_array_to_df(arrays, columns, column_types):
-    y = np.array(np.ma.array(arrays, fill_value=np.nan).filled(), dtype=object)
+    y = np.array(np.ma.array(arrays).filled())
     df = pd.DataFrame(y.T, columns=columns)
     df=df.dropna()
 
     for column, column_type in zip(columns, column_types):
-        df[column]=df[column].str.decode("utf-8")
-        df = df.replace({column:{"nan":0}})
-
+        # df[column]=df[column].str.decode("utf-8")
         if column_type =='bool':
-            df = df.replace({column:{'True':True,"False":False}})
+            df = df.replace({column:{1:True,0:False}})
         elif "int" in column_type:
-            df[column]=df[column].astype(int) 
+            df[column]=pd.to_numeric(df[column])
         
     return df
 
 
 def correct_string_data(df):
     if 'role' in df.columns:
-        roles = ["DUO_SUPPORT", "DUO_CARRY","SOLO", "NONE"]
-        for x in roles:
-            regx = r'^{}'.format(x)
-            df.loc[df['role'].str.contains(regx, regex=True), 'role']=x
+        df['role']=df['role']=df['role'].apply(lambda x:role_n_to_name[x])
 
     if 'lane' in df.columns:
-        lanes = ["MIDDLE","JUNGLE","BOTTOM", "TOP"]
-        for x in lanes:
-            regx = r'^{}'.format(x)
-            df.loc[df['lane'].str.contains(regx, regex=True), 'lane']=x
+        df['lane']=df['lane']=df['lane'].apply(lambda x:lane_n_to_name[x])
 
     if 'tier' in df.columns:
-        tiers = POST_DIAMOND_TIERS+PRE_DIAMOND_TIERS
-        for x in tiers:
-            regx = r'^{}'.format(x)
-            df.loc[df['tier'].str.contains(regx, regex=True), 'tier']=x
-    
+        df['tier']=df['tier']=df['tier'].apply(lambda x:tier_n_to_name[x])
+
+    if 'division' in df.columns:
+        df['division']=df['division']=df['division'].apply(lambda x:division_n_to_name[x])
+
     return df
         
 
@@ -71,15 +68,15 @@ def get_champ_data_df(tier):
     """
     Devuelve el dataframe de datos de campeon
     """
-    print("Solicitando datos de campeones - {}".format(tier))
+    print("Solicitando datos de campeones - {}".format(tier_n_to_name[tier]))
     columns = ['championId','teamId','role','lane','spell1Id','spell2Id',\
         'gameDuration','tier','gameId',\
         'win','item0','item1','item2','item3','item4','item5','item6',\
             'perk0','perk1','perk2','perk3','perk4','perk5',\
         'perkPrimaryStyle','perkSubStyle','statPerk0','statPerk1','statPerk2']
 
-    columns_type = ['uint32','uint32','string:11','string:6','uint32','uint32',\
-        'uint32','string:12','uint64','bool','uint32','uint32',\
+    columns_type = ['uint16','uint16','uint16','uint16','uint32','uint32',\
+        'uint32','uint16','uint64','bool','uint32','uint32',\
         'uint32','uint32','uint32','uint32','uint32','uint32',\
         'uint32','uint32','uint32','uint32','uint32','uint32','uint32','uint32','uint32',\
         'uint32']
@@ -92,7 +89,7 @@ def get_champ_data_df(tier):
         if len(champ_data_df) >= 500000:
             break
 
-    champ_data_df = correct_string_data(champ_data_df)
+    # champ_data_df = correct_string_data(champ_data_df)
     return champ_data_df
 
 
@@ -100,9 +97,9 @@ def get_bans_df(tier):
     """
     Devuelve el dataframe con los bans
     """
-    print("Solicitando bans - {}".format(tier))
+    print("Solicitando bans - {}".format(tier_n_to_name[tier]))
     columns = ['championId', 'tier','win','gameId','teamId']
-    columns_type = ['uint32','string:12','bool','uint64','uint32']
+    columns_type = ['uint32','uint32','bool','uint64','uint32']
 
     champ_ban_df = pd.DataFrame()
     for data in monary_db.block_query("statistics","bans",{"tier":tier},columns, columns_type, block_size=30000):
@@ -112,7 +109,7 @@ def get_bans_df(tier):
         if len(champ_ban_df) >= 500000:
             break
 
-    champ_ban_df = correct_string_data(champ_ban_df)
+    # champ_ban_df = correct_string_data(champ_ban_df)
     return champ_ban_df
 
 
@@ -120,11 +117,11 @@ def get_playstyle_df(tier):
     """
     Devuelve el dataframe con el playstyle
     """
-    print("Solicitando playstyle - {}".format(tier))
+    print("Solicitando playstyle - {}".format(tier_n_to_name[tier]))
     columns = ['championId','totalMinionsKilled','neutralMinionsKilled','neutralMinionsKilledTeamJungle',\
         'neutralMinionsKilledEnemyJungle','gameDuration', 'tier','kills','deaths','assists',\
         'totalDamageDealtToChampions','magicDamageDealtToChampions','physicalDamageDealtToChampions',]
-    columns_type = ['uint32','uint32','uint32','uint32','uint32','uint32','string:12','uint32','uint32','uint32',\
+    columns_type = ['uint32','uint32','uint32','uint32','uint32','uint32','uint32','uint32','uint32','uint32',\
         'uint32','uint32','uint32']
 
     champ_playstyle_df = pd.DataFrame()
@@ -135,14 +132,29 @@ def get_playstyle_df(tier):
         if len(champ_playstyle_df) >= 500000:
             break
 
-    champ_playstyle_df = correct_string_data(champ_playstyle_df)
     return champ_playstyle_df
 
 
-def generate_builds_stats_by_champ():
-    # Limpio los datos viejos
-    tasks.clear_data_from_3_days_ago()
+def get_skill_up_df(tier):
+    """
+    Devuelve el dataframe con los level up
+    """
+    print("Solicitando skills up - {}".format(tier_n_to_name[tier]))
+    columns = ["tier","championId"] + [str(i+1) for i in range(18)]
+    columns_type = ["uint32" for x in range(len(columns))]
 
+    skills_df = pd.DataFrame()
+    for data in monary_db.block_query("statistics","skill_up",{"tier":tier},columns, columns_type, block_size=30000):
+        df = monary_array_to_df(data, columns, columns_type)
+        skills_df = pd.concat([skills_df, df], ignore_index=True)
+        print("{} datos encontrados".format(len(skills_df)))
+        if len(skills_df) >= 500000:
+            break
+
+    return skills_df
+
+
+def generate_builds_stats_by_champ():
     now = dt.now()
     patch = get_saved_version()
     if not patch:
@@ -154,9 +166,10 @@ def generate_builds_stats_by_champ():
     # Agrego tier por tier
     for elo in elos:
         df_by_elo[elo]={
-            "champ_data":get_champ_data_df(elo),
-            "champ_ban_data":get_bans_df(elo),
-            "playstyle_data":get_playstyle_df(elo)
+            "champ_data":get_champ_data_df(tier_name_to_n[elo]),
+            "champ_ban_data":get_bans_df(tier_name_to_n[elo]),
+            "playstyle_data":get_playstyle_df(tier_name_to_n[elo]),
+            "skill_data":get_skill_up_df(tier_name_to_n[elo])
         }
         df_by_elo[elo]['total_matches']=len( df_by_elo[elo]['champ_data'])/10
 
@@ -164,22 +177,29 @@ def generate_builds_stats_by_champ():
     champ_data = pd.concat([x['champ_data'] for x in df_by_elo.values()], ignore_index=True).reset_index()
     champ_ban_data = pd.concat([x['champ_ban_data'] for x in df_by_elo.values()], ignore_index=True).reset_index()
     playstyle_data = pd.concat([x['playstyle_data'] for x in df_by_elo.values()], ignore_index=True).reset_index()
+    skill_data = pd.concat([x['skill_data'] for x in df_by_elo.values()], ignore_index=True).reset_index()
 
     df_by_elo['global']={"champ_data":champ_data,
              "champ_ban_data":champ_ban_data,
              "total_matches": len(champ_data)/10,
-             "playstyle_data":playstyle_data
+             "playstyle_data":playstyle_data,
+             "skill_data":skill_data
     }
 
-    df_by_elo["high_elo"]={"champ_data":champ_data.loc[champ_data['tier'].isin(HIGH_ELO_TIERS)],
-        "champ_ban_data":champ_ban_data.loc[champ_ban_data['tier'].isin(HIGH_ELO_TIERS)],
-        "total_matches": len(champ_data.loc[champ_data['tier'].isin(HIGH_ELO_TIERS)])/10,
-        "playstyle_data":playstyle_data.loc[playstyle_data['tier'].isin(HIGH_ELO_TIERS)]
+    high_elo_numbers = [tier_name_to_n[x] for x in HIGH_ELO_TIERS]
+    low_elo_numbers = [tier_name_to_n[x] for x in LOW_ELO_TIERS]
+
+    df_by_elo["high_elo"]={"champ_data":champ_data.loc[champ_data['tier'].isin(high_elo_numbers)],
+        "champ_ban_data":champ_ban_data.loc[champ_ban_data['tier'].isin(high_elo_numbers)],
+        "total_matches": len(champ_data.loc[champ_data['tier'].isin(high_elo_numbers)])/10,
+        "playstyle_data":playstyle_data.loc[playstyle_data['tier'].isin(high_elo_numbers)],
+        "skill_data":skill_data.loc[skill_data['tier'].isin(high_elo_numbers)],
     }
-    df_by_elo["low_elo"]={"champ_data":champ_data.loc[champ_data['tier'].isin(LOW_ELO_TIERS)],
-        "champ_ban_data":champ_ban_data.loc[champ_ban_data['tier'].isin(LOW_ELO_TIERS)],
-        "total_matches": len(champ_data.loc[champ_data['tier'].isin(LOW_ELO_TIERS)])/10,
-        "playstyle_data":playstyle_data.loc[playstyle_data['tier'].isin(LOW_ELO_TIERS)]
+    df_by_elo["low_elo"]={"champ_data":champ_data.loc[champ_data['tier'].isin(low_elo_numbers)],
+        "champ_ban_data":champ_ban_data.loc[champ_ban_data['tier'].isin(low_elo_numbers)],
+        "total_matches": len(champ_data.loc[champ_data['tier'].isin(low_elo_numbers)])/10,
+        "playstyle_data":playstyle_data.loc[playstyle_data['tier'].isin(low_elo_numbers)],
+        "skill_data":skill_data.loc[skill_data['tier'].isin(low_elo_numbers)]
     }
     
 
@@ -194,7 +214,7 @@ def generate_builds_stats_by_champ():
     "Mid":[],
     "Jungla":[],
     "Support":[],
-    "ADC":[]
+    "ADC":[],
     }
     
     for champ in champs:
@@ -207,15 +227,22 @@ def generate_builds_stats_by_champ():
 
         current_champ_rows = champ_data.loc[champ_data['championId']==champ]
 
-        role = current_champ_rows['role'].mode().iloc[0] 
-        lane = current_champ_rows['lane'].mode().iloc[0]
+        role = role_n_to_name[current_champ_rows['role'].mode().iloc[0]]
+        lane = lane_n_to_name[current_champ_rows['lane'].mode().iloc[0]]
 
         data = df_by_elo['high_elo']['champ_data']
         data = data.loc[data['championId']==champ]
+        skills = df_by_elo['high_elo']['skill_data']
+        skills = skills.loc[skills['championId']==champ]
 
+        if len(skills) == 0:
+            skills = df_by_elo['global']['skill_data']
+            skills = skills.loc[skills['championId']==champ]
         # Estadisticas generales
         
         final_data['lane']=get_lane_from_role({"role":str(role),"lane":str(lane)})
+        final_data["skill_order"]= get_skill_order(skills)
+
         byLane[final_data['lane']].append(champ)
         final_data.update(generate_champ_data(data, final_data['lane']))
 
@@ -271,12 +298,11 @@ def generate_builds_stats_by_champ():
         percents = []
 
         counterDf = get_counters(df_by_elo['high_elo']['champ_data'], champ, champsInLane )
-
         for x in champsInLane:
-            total = counterDf.loc[((counterDf['winner']==x) & (counterDf['looser']==champ)) | ((counterDf['winner']==champ) & (counterDf['looser']==x))]
+            total = counterDf.loc[((counterDf['winner']==x) & (counterDf['loser']==champ)) | ((counterDf['winner']==champ) & (counterDf['loser']==x))]
             if len(total) == 0:
                 continue
-            win = len(counterDf.loc[(counterDf['winner']==champ) & (counterDf['looser']==x)])
+            win = len(counterDf.loc[(counterDf['winner']==champ) & (counterDf['loser']==x)])
             percents.append({
                 "champ":x,
                 "winRate": win*100/len(total)
@@ -289,6 +315,8 @@ def generate_builds_stats_by_champ():
 
     # stats para grafica radar
     radar_stats = []
+
+    
 
     for key, value in radar_rates.items():
         tmp_df = pd.DataFrame(value)
@@ -316,8 +344,22 @@ def generate_builds_stats_by_champ():
     for stat in radar_stats:
         print("Insertando estadisticas generales de elo {}".format(stat['elo']))
         stats_db.radar_stats.replace_one({"elo":stat['elo'], 'patch':patch}, stat, upsert=True)
+
+    db_metadata.set("last_calculated_patch", patch)
     
     
+
+def get_skill_order(champ_data):
+    df = champ_data[[str(x+1) for x in range(18)]]
+    groups = df.groupby(df.columns.tolist(),as_index=False).size()\
+        .reset_index().rename(columns={0:"records"}).sort_values("records",ascending=False).reset_index(drop=True)
+    
+    best_order = groups.iloc[0].to_dict()
+    best_order = {x:int(y) for x,y in best_order.items() if x not in ["records"]}
+    return best_order
+
+
+
 def generate_champ_data(champ_data_original, lane):
     # Tomo solo las wins
     champ_data = champ_data_original.loc[champ_data_original['win']]
@@ -499,7 +541,7 @@ def generate_champ_data(champ_data_original, lane):
 
 
 def item_key_list_to_name(klist):
-    lista = [df_items.loc[df_items['id']==str(x)]['name'][0] for x in klist]
+    lista = [df_items.loc[df_items['id']==str(int(x))]['name'][0] for x in klist]
     return lista
 
 
@@ -550,33 +592,26 @@ def get_farm(data):
 
 
 def get_counters(data, champ, same_lane_champs ):
+    print("Calculando counters de {}".format(champs_by_id[str(champ)]['name']))
     counterList = []
     gameIds_with_champ = data.loc[data['championId']==champ]['gameId'].unique()
     gameIds = data.loc[(data['championId'].isin(same_lane_champs)) & (data['gameId'].isin(gameIds_with_champ))]['gameId'].unique()
 
-    print("Calculando counters de {}".format(champs_by_id[str(champ)]['name']))
-    for gameId in gameIds:
-        durations = data.loc[data['gameId']==gameId]['gameDuration'].unique()
-        for duration in durations:
-            matchData = data.loc[(data['gameId']==gameId) & (data['gameDuration']==duration)]
-            # Detecto si el champ gano o perdio
-            champ_data = matchData.loc[matchData['championId']==champ]
-            win = champ_data.iloc[0]['win']
+    games = data.loc[data['gameId'].isin(gameIds)]
+    games = games.loc[games['championId'].isin(same_lane_champs + [champ])]
 
-            if win:
-                loosers = matchData.loc[matchData['win']==False]['championId'].unique()
-                loosers = [x for x in loosers if x in same_lane_champs]
-                winners = [champ]
-            else:
-                winners = matchData.loc[matchData['win']==True]['championId'].unique()
-                winners = [x for x in winners if x in same_lane_champs]
-                loosers = [champ]
+    champ_wins = games.loc[(games['win']) & (games['championId']==champ)]
+    champ_losses = games.loc[(~games['win']) & (games['championId']==champ)]
+    
+    other_losses = games.loc[(games['championId'] != champ ) & (games['gameId'].isin(champ_wins['gameId'].unique())) & ~(games['win']) ]
+    other_wins = games.loc[(games['championId'] != champ ) & (games['gameId'].isin(champ_losses['gameId'].unique())) & (games['win']) ]
 
-            winList = []
-            for looser in loosers:
-                for winner in winners:
-                    winList.append({"looser":looser, 'winner':winner})
-            counterList.extend(winList)
-    counterDf = pd.DataFrame(counterList)
+    other_wins.loc[:,'loser'] = champ
+    other_wins = other_wins.rename(columns= {"championId":"winner"})[['loser','winner']]
+
+    other_losses.loc[:,'winner'] = champ
+    other_losses = other_losses.rename(columns= {"championId":"loser"})[['loser','winner']]
+
+    counterDf = pd.concat([other_wins, other_losses], ignore_index=True)
     return counterDf
 

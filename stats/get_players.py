@@ -1,7 +1,7 @@
 from datetime import datetime as dt
 import pandas as pd
 from time import sleep
-
+import json
 from lol_stats_api.helpers.mongodb import get_mongo_players
 from lol_stats_api.helpers.variables import player_sample, HIGH_ELO_TIERS, LOW_ELO_TIERS, \
 POST_DIAMOND_TIERS, PRE_DIAMOND_TIERS
@@ -75,7 +75,8 @@ def update_player_list(player_sample=player_sample,servers=SERVER_ROUTES.keys())
     print("Obtenidos {} jugadores".format(str(len(player_frame))))
     for index, row in player_frame.iterrows():
         # Mando a celery el jugador para actualizar
-        tasks.update_player_detail_in_celery.delay(row.to_dict())
+        print("Agregando a celery jugador {}".format(str(index+1)))
+        tasks.update_player_detail_in_celery.delay(json.dumps(row.to_dict()))
 
 
 def update_player_detail(current_player):
@@ -84,6 +85,8 @@ def update_player_detail(current_player):
     """
     if not current_player:
         return
+
+    current_player = json.loads(current_player)
 
     print("Solicitando detalle de {} ({})".format(current_player['summonerName'], current_player['server']))
     data = get_player_by_id(current_player['summonerId'], current_player['server'])

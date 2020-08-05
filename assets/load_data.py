@@ -5,11 +5,16 @@ from .ddragon_routes import get_all_summoners_data,get_summoner_img
 from .ddragon_routes import get_all_icon_data, get_icon_img
 from .ddragon_routes import get_current_version, get_all_maps
 from .ddragon_routes import get_all_runes_data, get_rune_img
-
+import os
 from lol_stats_api.helpers.mongodb import get_mongo_assets,get_saved_version
 
 from datetime import datetime as dt
 import re
+
+from redis import Redis
+
+db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
+
 
 db = get_mongo_assets()
 
@@ -21,7 +26,7 @@ def load_data(force=False, clean_load=False):
     game_version = get_current_version()
     print(saved_version, game_version)
     if saved_version == game_version and not force:
-        return None
+        return False
 
     # Cargo datos de campeones
     load_champ_data(clean_load=clean_load)
@@ -37,14 +42,9 @@ def load_data(force=False, clean_load=False):
 
     # Datos de runas
     load_rune_data(clean_load=clean_load)
-
-     # Actualizo la version por la actual
-    current_data = db.metadata.find_one({})
-    new_data = {"current_version":game_version, "updated":dt.utcnow()}
-    if current_data:
-        db.metadata.replace_one({"_id":current_data['_id']}, new_data)
-    else:
-        db.metadata.insert_one(new_data)
+    # Actualizo la version por la actual
+    db_metadata.set("current_version",game_version)
+    db_metadata.set("updated",dt.utcnow().timestamp())
 
     
 def load_champ_data(clean_load=False):

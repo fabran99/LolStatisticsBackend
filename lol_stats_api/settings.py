@@ -136,7 +136,6 @@ API_KEY = os.getenv("API_KEY", None)
 DEF_LANGUAGE = os.getenv("DEF_LANGUAGE", None)
 MONGO_DB_HOST = os.getenv("MONGO_DB_HOST", None)
 
-PREPROCESS_PATH = os.getenv("PREPROCESS_PATH")
 
 # Celery
 CELERY_ACCEPT_CONTENT = ['application/json']
@@ -146,3 +145,4 @@ CELERY_TIMEZONE = "Etc/UTC"
 CELERY_BROKER_URL='redis://{}:{}/{}'.format(os.getenv("CELERY_HOST"), os.getenv("CELERY_PORT"), os.getenv("CELERY_DB"))
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://{}:{}/{}'.format(os.getenv("CELERY_HOST"), os.getenv("CELERY_PORT"), os.getenv("CELERY_RESULT_DB"))
+CELERY_RESULT_TRANSPORT_OPTIONES = {'visibility_timeout': 7200}

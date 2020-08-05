@@ -4,10 +4,10 @@ from django.http import JsonResponse
 
 assetsDb = get_mongo_assets() 
 statsDb = get_mongo_stats()
-from lol_stats_api.helpers.mongodb import get_saved_version
+from lol_stats_api.helpers.mongodb import get_saved_version, get_last_calculated_patch
 
 def get_main_list():
-    patch = get_saved_version()
+    patch = get_last_calculated_patch()
     img_link_dict = {
         "champ_splashart":"https://ddragon.leagueoflegends.com/cdn/img/champion/splash/$champ_key$_$skin_id$.jpg",
         "champ_square":"https://ddragon.leagueoflegends.com/cdn/{}/img/champion/$champ_key$.png".format(patch),
@@ -46,7 +46,8 @@ def get_main_list():
         "spells":1,
         'champName':1,
         'strongAgainst':1,
-        "weakAgainst":1
+        "weakAgainst":1,
+        "skill_order":1
     }
 
     champ_list = {}
@@ -114,7 +115,8 @@ def get_main_list():
             "runes":stat['runes'],
             "spells":stat['spells'],
             "strongAgainst":stat['strongAgainst'],
-            "weakAgainst":stat['weakAgainst']
+            "weakAgainst":stat['weakAgainst'],
+            "skill_order":stat['skill_order']
         })
 
     final_list = []
