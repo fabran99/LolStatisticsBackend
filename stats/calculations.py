@@ -309,8 +309,8 @@ def generate_builds_stats_by_champ():
             })
 
         winrate=pd.DataFrame(percents).sort_values("winRate")
-        general_stats[champKeys[champ]]['strongAgainst']=winrate.tail(3)['champ'].tolist()
-        general_stats[champKeys[champ]]['weakAgainst']=winrate.head(3)['champ'].tolist()
+        general_stats[champKeys[champ]]['strongAgainst']=winrate.tail(5)['champ'].tolist()
+        general_stats[champKeys[champ]]['weakAgainst']=winrate.head(5)['champ'].tolist()
         
 
     # stats para grafica radar

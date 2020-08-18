@@ -57,11 +57,16 @@ SERVER_REAL_NAME_TO_ROUTE={
 
 
 MATCHES_STATS_KEYS=[
-    "win","item0","item1","item2","item3","item4","item5","item6","kills","deaths","assists","pentaKills","quadraKills","doubleKills","tripleKills","totalDamageDealtToChampions","magicDamageDealtToChampions","physicalDamageDealtToChampions","perk0","perk1","perk2","perk3","perk4","perk5","perkPrimaryStyle","perkSubStyle","statPerk0","statPerk1","statPerk2"
+    "win","item0","item1","item2","item3","item4","item5","item6","kills",\
+        "deaths","assists", "perk0","perk1","perk2","perk3","perk4","perk5",\
+                "perkPrimaryStyle","perkSubStyle","statPerk0","statPerk1","statPerk2"
 ]
 
 PLAYSTYLE_STATS_KEYS = [
-    "win","kills","assists","deaths","totalDamageDealtToChampions","magicDamageDealtToChampions","physicalDamageDealtToChampions","goldEarned","totalMinionsKilled","neutralMinionsKilled","neutralMinionsKilledTeamJungle","neutralMinionsKilledEnemyJungle","wardsPlaced","wardsKilled",
+    "win","kills","assists","deaths","totalDamageDealtToChampions","magicDamageDealtToChampions",\
+        "physicalDamageDealtToChampions","goldEarned","totalMinionsKilled","neutralMinionsKilled","neutralMinionsKilledTeamJungle",\
+            "neutralMinionsKilledEnemyJungle","wardsPlaced","wardsKilled","physicalDamageTaken",\
+                "damageDealtToObjectives","magicalDamageTaken","trueDamageTaken","visionScore",
 ]
 
 HIGH_ELO_TIERS = ["DIAMOND","PLATINUM","challengers","masters","grandmasters"]
@@ -203,7 +208,7 @@ tier_n_to_name={
 
 # Crontabs
 cron_players={
-    "day_of_week":'0,2,4',
+    "day_of_week":'0,3',
     "hour":"4",
     "minute":"38",
     "day_of_month":"*",

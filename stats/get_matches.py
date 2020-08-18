@@ -192,9 +192,18 @@ def process_match(match):
 
     # Guardo el champ de cada participantId
     participant_id_champ = {}
+    participant_id_datarole = {}
     # Manejo datos de campeones y playstyle
     for participant in match_detail['participants']:
         participant_id_champ[participant['participantId']]=participant['championId']
+        participant_id_datarole[participant['participantId']]={
+            "role":role_name_to_n[participant['timeline']['role']],
+            "lane":lane_name_to_n[participant['timeline']['lane']],
+            "championId":participant['championId'],
+            "tier":tier_name_to_n[match['tier']],
+            "division":division_name_to_n[match['division']],
+            "timestamp":match["timestamp"]
+        }
         # Campeones
         data={
             "championId":participant['championId'],
@@ -331,6 +340,54 @@ def process_match(match):
                 print("Inserto level ups")
                 db_stats.skill_up.insert_many(final_data)
         
+
+        #=======================================================
+        # Ahora busco los eventos de compra de items
+        #=======================================================
+        first_buy = timelist_data['frames'][1]['events']
+        participant_buy = {}
+        for c_event in first_buy:
+            if not (c_event['type']=="ITEM_PURCHASED"):
+                continue
+            
+            partId = c_event['participantId']
+            if not partId in participant_buy:
+                participant_buy[partId]={
+                    "items":{},
+                    "role":participant_id_datarole[partId]['role'],
+                    "lane":participant_id_datarole[partId]['lane'],
+                    "championId":participant_id_datarole[partId]['championId'],
+                    "tier":participant_id_datarole[partId]['tier'],
+                    "division":participant_id_datarole[partId]['division'],
+                    "timestamp":participant_id_datarole[partId]['timestamp']
+                }
+
+            itemId = c_event['itemId']
+            if not itemId in participant_buy[partId]['items']:
+                participant_buy[partId]['items'][itemId]=0
+
+            participant_buy[partId]['items'][itemId]+=1
+        
+        buys = []
+
+        for key, value in participant_buy.items():
+            if len(value['items'].keys()) >=2 and len(value['items'].keys()) <=3:
+                items = value['items']
+                data = value.copy()
+                del data['items']
+                counter = 0
+                for i,x in items.items():
+                    counter+=1
+                    data['item'+str(counter)]=i
+                    data['item'+str(counter)+"_n"]=x
+
+                buys.append(data)
+
+        if len(buys) > 0:
+            print("Insertando objetos iniciales en la base de datos")
+            db_stats.first_buy.insert_many(buys)
+
+
 
     # Inserto en la base
     print("Insertando datos de la partida en la base de datos")

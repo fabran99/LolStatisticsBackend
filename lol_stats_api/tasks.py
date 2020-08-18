@@ -123,7 +123,7 @@ def process_match_with_celery(match):
 
 # Estadisticas
 @periodic_task(name="periodically_generate_new_stats",
-    run_every=(crontab(minute='45', hour="20,8"))
+    run_every=(crontab(minute='31', hour="20,5,10,15"))
 )
 def periodically_generate_new_stats():
     """

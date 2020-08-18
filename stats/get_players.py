@@ -47,9 +47,9 @@ def update_player_list(player_sample=player_sample,servers=SERVER_ROUTES.keys())
                     page = 1
 
                     if key in ["DIAMOND","PLATINUM"]:
-                        page = 4
+                        page = 3
                     else:
-                        page = 2
+                        page = 1
 
                     while page > 0:
                         data = get_player_list_by_division(key, div, server, page=str(page))
