@@ -84,6 +84,8 @@ def clear_data_from_3_days_ago():
     # Playstyle
     print("Eliminando champ playstyle")
     db_stats.champ_playstyle.remove({'timestamp':{"$lt":timestamp}})
+    print("Eliminando first buy")
+    db_stats.first_buy.remove({'timestamp':{"$lt":timestamp}})
 
 
 @periodic_task(name="clear_redis_old_data",

@@ -78,7 +78,7 @@ PRE_DIAMOND_TIERS = ['IRON',"BRONZE","SILVER","GOLD","PLATINUM","DIAMOND"]
 # =================================
 # Item clases
 # =================================
-
+df_all_items = pd.DataFrame(get_all_items_data(final_form_only=False)).T[["name","id","price",'final_form',"tags"]]
 # Busco items que esten en su forma final
 df_items = pd.DataFrame(get_all_items_data(final_form_only=True)).T[["name","id","price",'final_form',"tags"]]
 # Items de vision
@@ -216,3 +216,15 @@ cron_players={
 }
 cron_players_text = "{} {} {} {} {}".format(cron_players['minute'], cron_players['hour'], \
     cron_players['day_of_month'], cron_players['month_of_year'], cron_players['day_of_week'])
+
+
+
+# Fases del juego
+MIN_GAME_DURATION = 60 * 5 # 5 minutos
+EARLY_GAME_RANGE = [0, 60 * 25]
+MID_GAME_RANGE = [EARLY_GAME_RANGE[1], 60 * 35]
+LATE_GAME_RANGE = [MID_GAME_RANGE[1], 60 * 100]
+
+PHASE_BAD_RANGE = [0, 48]
+PHASE_OK_RANGE = [48, 53]
+PHASE_GOOD_RANGE = [53, 100]
