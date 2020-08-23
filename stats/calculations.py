@@ -3,7 +3,7 @@ from lol_stats_api.helpers.variables import SERVER_ROUTES, SERVER_REAL_NAME_TO_R
 from lol_stats_api.helpers.variables import DIVISIONS, TIERS, HIGH_ELO_TIERS, LOW_ELO_TIERS, POST_DIAMOND_TIERS, PRE_DIAMOND_TIERS
 from lol_stats_api.helpers.variables import GAME_TYPE,MAIN_GAMEMODE,RANKED_QUEUES
 from lol_stats_api.helpers.variables import MATCHES_STATS_KEYS,PLAYSTYLE_STATS_KEYS, HIGH_ELO_TIERS
-from lol_stats_api.helpers.variables import df_items, trinkets, final_form_items, boots, support_items, jungle_items,df_all_items
+from stats.getItemDfs import df_items, trinkets, final_form_items, boots, support_items, jungle_items,df_all_items
 from lol_stats_api.helpers.variables import tier_n_to_name, role_n_to_name, division_n_to_name, lane_n_to_name, tier_name_to_n, lane_name_to_n,\
     role_name_to_n, division_name_to_n
 
@@ -31,43 +31,13 @@ from lol_stats_api.helpers.mongodb import get_saved_version
 from assets.ddragon_routes import get_current_version
 # from lol_stats_api import tasks
 
+from stats.models import *
+from django_pandas.io import read_frame
+
 db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
 
 stats_db = get_mongo_stats()
-monary_db =  get_monary()
 
-
-# Utilidad
-def monary_array_to_df(arrays, columns, column_types):
-    y = np.array(np.ma.array(arrays).filled())
-    df = pd.DataFrame(y.T, columns=columns)
-    df=df.dropna()
-
-    for column, column_type in zip(columns, column_types):
-        # df[column]=df[column].str.decode("utf-8")
-        if column_type =='bool':
-            df = df.replace({column:{1:True,0:False}})
-        elif "int" in column_type:
-            df[column]=pd.to_numeric(df[column])
-        
-    return df
-
-
-def correct_string_data(df):
-    if 'role' in df.columns:
-        df['role']=df['role']=df['role'].apply(lambda x:role_n_to_name[x])
-
-    if 'lane' in df.columns:
-        df['lane']=df['lane']=df['lane'].apply(lambda x:lane_n_to_name[x])
-
-    if 'tier' in df.columns:
-        df['tier']=df['tier']=df['tier'].apply(lambda x:tier_n_to_name[x])
-
-    if 'division' in df.columns:
-        df['division']=df['division']=df['division'].apply(lambda x:division_n_to_name[x])
-
-    return df
-        
 
 # Generar dataframes
 def get_champ_data_df(tier):
@@ -81,22 +51,9 @@ def get_champ_data_df(tier):
             'perk0','perk1','perk2','perk3','perk4','perk5',\
         'perkPrimaryStyle','perkSubStyle','statPerk0','statPerk1','statPerk2']
 
-    columns_type = ['uint16','uint16','uint16','uint16','uint32','uint32',\
-        'uint32','uint16','uint64','bool','uint32','uint32',\
-        'uint32','uint32','uint32','uint32','uint32','uint32',\
-        'uint32','uint32','uint32','uint32','uint32','uint32','uint32','uint32','uint32',\
-        'uint32']
-
-    champ_data_df = pd.DataFrame()
-    for data in monary_db.block_query("statistics","champ_data",{"tier":tier},columns, columns_type, block_size=20000):
-        df = monary_array_to_df(data, columns, columns_type)
-        champ_data_df = pd.concat([champ_data_df, df], ignore_index=True)
-        print("{} datos encontrados".format(len(champ_data_df)))
-        if len(champ_data_df) >= 500000:
-            break
-
-    # champ_data_df = correct_string_data(champ_data_df)
-    return champ_data_df
+    qs = ChampData.objects.filter(tier=tier)
+    df = read_frame(qs, fieldnames=columns)
+    return df
 
 
 def get_bans_df(tier):
@@ -105,18 +62,11 @@ def get_bans_df(tier):
     """
     print("Solicitando bans - {}".format(tier_n_to_name[tier]))
     columns = ['championId', 'tier','win','gameId','teamId']
-    columns_type = ['uint32','uint32','bool','uint64','uint32']
 
-    champ_ban_df = pd.DataFrame()
-    for data in monary_db.block_query("statistics","bans",{"tier":tier},columns, columns_type, block_size=30000):
-        df = monary_array_to_df(data, columns, columns_type)
-        champ_ban_df = pd.concat([champ_ban_df, df], ignore_index=True)
-        print("{} datos encontrados".format(len(champ_ban_df)))
-        if len(champ_ban_df) >= 500000:
-            break
+    qs = Ban.objects.filter(tier=tier)
+    df = read_frame(qs, fieldnames=columns)
 
-    # champ_ban_df = correct_string_data(champ_ban_df)
-    return champ_ban_df
+    return df
 
 
 def get_playstyle_df(tier):
@@ -127,18 +77,10 @@ def get_playstyle_df(tier):
     columns = ['championId','totalMinionsKilled','neutralMinionsKilled','neutralMinionsKilledTeamJungle',\
         'neutralMinionsKilledEnemyJungle','gameDuration', 'tier','kills','deaths','assists',\
         'totalDamageDealtToChampions','magicDamageDealtToChampions','physicalDamageDealtToChampions',]
-    columns_type = ['uint32','uint32','uint32','uint32','uint32','uint32','uint32','uint32','uint32','uint32',\
-        'uint32','uint32','uint32']
-
-    champ_playstyle_df = pd.DataFrame()
-    for data in monary_db.block_query("statistics","champ_playstyle",{"tier":tier},columns, columns_type, block_size=30000):
-        df = monary_array_to_df(data, columns, columns_type)
-        champ_playstyle_df = pd.concat([champ_playstyle_df, df], ignore_index=True)
-        print("{} datos encontrados".format(len(champ_playstyle_df)))
-        if len(champ_playstyle_df) >= 500000:
-            break
-
-    return champ_playstyle_df
+    
+    qs = ChampPlaystyle.objects.filter(tier=tier)
+    df = read_frame(qs, fieldnames=columns)
+    return df
 
 
 def get_skill_up_df(tier):
@@ -146,18 +88,11 @@ def get_skill_up_df(tier):
     Devuelve el dataframe con los level up
     """
     print("Solicitando skills up - {}".format(tier_n_to_name[tier]))
-    columns = ["tier","championId"] + [str(i+1) for i in range(18)]
-    columns_type = ["uint32" for x in range(len(columns))]
-
-    skills_df = pd.DataFrame()
-    for data in monary_db.block_query("statistics","skill_up",{"tier":tier},columns, columns_type, block_size=30000):
-        df = monary_array_to_df(data, columns, columns_type)
-        skills_df = pd.concat([skills_df, df], ignore_index=True)
-        print("{} datos encontrados".format(len(skills_df)))
-        if len(skills_df) >= 500000:
-            break
-
-    return skills_df
+    columns = ["tier","championId"] + ["_"+str(i+1) for i in range(18)]
+    
+    qs = SkillUp.objects.filter(tier=tier)
+    df = read_frame(qs, fieldnames=columns)
+    return df
 
 
 def get_first_buy_df(tier):
@@ -168,18 +103,9 @@ def get_first_buy_df(tier):
     columns = ["tier","championId","role","lane"]
     for x in range(1,4):
         columns.extend(["item"+str(x), "item"+str(x)+"_n"])
-    columns_type = ["uint32" for x in range(len(columns))]
-
-    firstbuy_df = pd.DataFrame()
-    for data in monary_db.block_query("statistics","first_buy",{"tier":tier},columns, columns_type, block_size=30000):
-        df = monary_array_to_df(data, columns, columns_type)
-        firstbuy_df = pd.concat([firstbuy_df, df], ignore_index=True)
-        print("{} datos encontrados".format(len(firstbuy_df)))
-        if len(firstbuy_df) >= 500000:
-            break
-
-    return firstbuy_df
-
+    qs = FirstBuy.objects.filter(tier=tier)
+    df = read_frame(qs, fieldnames=columns)
+    return df
 
 
 # Calculos de build
@@ -474,12 +400,12 @@ def get_first_buy(data):
     
 
 def get_skill_order(champ_data):
-    df = champ_data[[str(x+1) for x in range(18)]]
+    df = champ_data[["_"+str(x+1) for x in range(18)]]
     groups = df.groupby(df.columns.tolist(),as_index=False).size()\
         .reset_index().rename(columns={0:"records"}).sort_values("records",ascending=False).reset_index(drop=True)
     
     best_order = groups.iloc[0].to_dict()
-    best_order = {x:int(y) for x,y in best_order.items() if x not in ["records"]}
+    best_order = {x.split("_")[1]:int(y) for x,y in best_order.items() if x not in ["records"]}
     return best_order
 
 

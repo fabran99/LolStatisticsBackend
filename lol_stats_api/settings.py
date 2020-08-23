@@ -87,9 +87,13 @@ WSGI_APPLICATION = 'lol_stats_api.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+            'ENGINE': 'django.contrib.gis.db.backends.postgis',
+            'NAME': os.environ.get('PSQL_DB_NAME'),
+            'USER': os.environ.get('PSQL_USERNAME'),
+            'PASSWORD': os.environ.get('PSQL_PASSWORD'),
+            'HOST': os.environ.get('PSQL_HOSTNAME'),
+            'PORT': os.environ.get('PSQL_PORT'),
+        }
 }
 
 

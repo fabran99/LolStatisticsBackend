@@ -60,6 +60,7 @@ def get_saved_version():
     current_version = db_metadata.get("current_version")
     return current_version
 
+
 def get_last_calculated_patch():
     """
     Devuelve la ultima version cuyos datos han sido actualizados
