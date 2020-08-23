@@ -4,10 +4,10 @@ from django.http import JsonResponse
 
 assetsDb = get_mongo_assets() 
 statsDb = get_mongo_stats()
-from lol_stats_api.helpers.mongodb import get_saved_version
+from lol_stats_api.helpers.mongodb import get_saved_version, get_last_calculated_patch
 
 def get_main_list():
-    patch = get_saved_version()
+    patch = get_last_calculated_patch()
     img_link_dict = {
         "champ_splashart":"https://ddragon.leagueoflegends.com/cdn/img/champion/splash/$champ_key$_$skin_id$.jpg",
         "champ_square":"https://ddragon.leagueoflegends.com/cdn/{}/img/champion/$champ_key$.png".format(patch),
@@ -42,11 +42,14 @@ def get_main_list():
         'runes':1,
         'build':1,
         "championId":1,
-        "lane":1,
+        "lanes":1,
         "spells":1,
         'champName':1,
         'strongAgainst':1,
-        "weakAgainst":1
+        "weakAgainst":1,
+        "skill_order":1,
+        "info_by_lane":1,
+        "phases_winrate":1
     }
 
     champ_list = {}
@@ -91,15 +94,18 @@ def get_main_list():
             continue
 
         high_elo_winrate = stat['stats']['high_elo']['winRate']
-        lane = stat['lane']
-        if ranking[lane]['winRate']<high_elo_winrate:
-            ranking[lane]["winRate"]=high_elo_winrate
-            ranking[lane]['championId']=stat['championId']
-            ranking[lane]['champName']=stat["champName"]
+        lanes = stat['lanes']
+        for lane in lanes:
+            winrate = next(item['winRate'] for item in high_elo_winrate if item['lane']==lane)
+
+            if ranking[lane]['winRate']<winrate:
+                ranking[lane]["winRate"]=winrate
+                ranking[lane]['championId']=stat['championId']
+                ranking[lane]['champName']=stat["champName"]
 
         champ_list[str(stat['championId'])].update({
-            "lane":lane,
-            "winRate":high_elo_winrate,
+            "lanes":lanes,
+            "winRate":stat['stats']['high_elo']['winRate'],
             "pickRate":stat['stats']['high_elo']['pickRate'],
             "banRate":stat['stats']['high_elo']['banRate'],
             "banRate":stat['stats']['high_elo']['banRate'],
@@ -110,11 +116,11 @@ def get_main_list():
             "kills":stat['stats']['high_elo']['kda']['kills'],
             "farmPerMin":stat['stats']['high_elo']['farmPerMin'],
             "damageTypes":stat['stats']['high_elo']['damageTypes'],
-            "build":stat['build'],
-            "runes":stat['runes'],
-            "spells":stat['spells'],
+            "info_by_lane":stat["info_by_lane"],
             "strongAgainst":stat['strongAgainst'],
-            "weakAgainst":stat['weakAgainst']
+            "weakAgainst":stat['weakAgainst'],
+            "skill_order":stat['skill_order'],
+            "phases_winrate":stat['phases_winrate'],
         })
 
     final_list = []
@@ -138,7 +144,7 @@ def get_main_list():
         perk.pop("_id")
         perk_list.append(perk)
 
-    version = get_saved_version()
+    version = get_last_calculated_patch()
     if not version:
         version = None
 
