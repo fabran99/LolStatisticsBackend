@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'vdpv^vsdz64le4bcr!ttqg$7)%d)_dywjwnf(*le0wvwdfh@mn'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -58,7 +58,7 @@ MIDDLEWARE = [
 ]
 
 
-CORS_ORIGIN_ALLOW_ALL = True 
+CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'lol_stats_api.urls'
@@ -87,13 +87,13 @@ WSGI_APPLICATION = 'lol_stats_api.wsgi.application'
 
 DATABASES = {
     'default': {
-            'ENGINE': 'django.contrib.gis.db.backends.postgis',
-            'NAME': os.environ.get('PSQL_DB_NAME'),
-            'USER': os.environ.get('PSQL_USERNAME'),
-            'PASSWORD': os.environ.get('PSQL_PASSWORD'),
-            'HOST': os.environ.get('PSQL_HOSTNAME'),
-            'PORT': os.environ.get('PSQL_PORT'),
-        }
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': os.environ.get('PSQL_DB_NAME'),
+        'USER': os.environ.get('PSQL_USERNAME'),
+        'PASSWORD': os.environ.get('PSQL_PASSWORD'),
+        'HOST': os.environ.get('PSQL_HOSTNAME'),
+        'PORT': os.environ.get('PSQL_PORT'),
+    }
 }
 
 
@@ -146,7 +146,9 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_TIMEZONE = "Etc/UTC"
-CELERY_BROKER_URL='redis://{}:{}/{}'.format(os.getenv("CELERY_HOST"), os.getenv("CELERY_PORT"), os.getenv("CELERY_DB"))
+CELERY_BROKER_URL = 'redis://{}:{}/{}'.format(
+    os.getenv("CELERY_HOST"), os.getenv("CELERY_PORT"), os.getenv("CELERY_DB"))
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_RESULT_BACKEND = 'redis://{}:{}/{}'.format(os.getenv("CELERY_HOST"), os.getenv("CELERY_PORT"), os.getenv("CELERY_RESULT_DB"))
+CELERY_RESULT_BACKEND = 'redis://{}:{}/{}'.format(os.getenv(
+    "CELERY_HOST"), os.getenv("CELERY_PORT"), os.getenv("CELERY_RESULT_DB"))
 CELERY_RESULT_TRANSPORT_OPTIONES = {'visibility_timeout': 7200}
