@@ -10,7 +10,6 @@ from lol_stats_api.helpers.variables import tier_n_to_name, role_n_to_name, divi
 from lol_stats_api.helpers.variables import MIN_GAME_DURATION, EARLY_GAME_RANGE, MID_GAME_RANGE, LATE_GAME_RANGE, \
     PHASE_BAD_RANGE, PHASE_GOOD_RANGE, PHASE_OK_RANGE
 
-
 from assets.get_assets_mongodb import *
 from lol_stats_api.helpers.mongodb import get_mongo_stats, get_monary
 import re
@@ -29,82 +28,96 @@ from redis import Redis
 champs_by_id = get_all_champs_name_id()
 from lol_stats_api.helpers.mongodb import get_saved_version
 from assets.ddragon_routes import get_current_version
-# from lol_stats_api import tasks
-
-from stats.models import *
-from django_pandas.io import read_frame
+import psycopg2
 
 db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
 
 stats_db = get_mongo_stats()
 
+param_dic = {
+    "host":os.environ.get('PSQL_HOSTNAME'),
+    "database":os.environ.get('PSQL_DB_NAME'),
+    "user":os.environ.get('PSQL_USERNAME'),
+    "password":os.environ.get('PSQL_PASSWORD')
+}
+
+conn = psycopg2.connect(**param_dic)
+cursor = conn.cursor()
+
+
+def strListToQuots(strs):
+    return ['"{}"'.format(x) for x in strs]
 
 # Generar dataframes
-def get_champ_data_df(tier):
+def get_champ_data_df():
     """
     Devuelve el dataframe de datos de campeon
     """
-    print("Solicitando datos de campeones - {}".format(tier_n_to_name[tier]))
+    print("Solicitando datos de campeones")
     columns = ['championId','teamId','role','lane','spell1Id','spell2Id',\
         'gameDuration','tier','gameId',\
         'win','item0','item1','item2','item3','item4','item5','item6',\
             'perk0','perk1','perk2','perk3','perk4','perk5',\
         'perkPrimaryStyle','perkSubStyle','statPerk0','statPerk1','statPerk2']
 
-    qs = ChampData.objects.filter(tier=tier)
-    df = read_frame(qs, fieldnames=columns)
+    columns = strListToQuots(columns)
+    query = "SELECT {} FROM public.stats_champdata".format(", ".join(columns))
+    df = pd.read_sql(query, conn)
     return df
 
 
-def get_bans_df(tier):
+def get_bans_df():
     """
     Devuelve el dataframe con los bans
     """
-    print("Solicitando bans - {}".format(tier_n_to_name[tier]))
+    print("Solicitando bans")
     columns = ['championId', 'tier','win','gameId','teamId']
 
-    qs = Ban.objects.filter(tier=tier)
-    df = read_frame(qs, fieldnames=columns)
-
+    columns = strListToQuots(columns)
+    query = "SELECT {} FROM public.stats_ban".format(", ".join(columns))
+    df = pd.read_sql(query, conn)
     return df
 
 
-def get_playstyle_df(tier):
+def get_playstyle_df():
     """
     Devuelve el dataframe con el playstyle
     """
-    print("Solicitando playstyle - {}".format(tier_n_to_name[tier]))
+    print("Solicitando playstyle")
     columns = ['championId','totalMinionsKilled','neutralMinionsKilled','neutralMinionsKilledTeamJungle',\
         'neutralMinionsKilledEnemyJungle','gameDuration', 'tier','kills','deaths','assists',\
         'totalDamageDealtToChampions','magicDamageDealtToChampions','physicalDamageDealtToChampions',]
     
-    qs = ChampPlaystyle.objects.filter(tier=tier)
-    df = read_frame(qs, fieldnames=columns)
+    columns = strListToQuots(columns)
+    query = "SELECT {} FROM public.stats_champplaystyle".format(", ".join(columns))
+    df = pd.read_sql(query, conn)
     return df
 
 
-def get_skill_up_df(tier):
+def get_skill_up_df():
     """
     Devuelve el dataframe con los level up
     """
-    print("Solicitando skills up - {}".format(tier_n_to_name[tier]))
+    print("Solicitando skills up")
     columns = ["tier","championId"] + ["_"+str(i+1) for i in range(18)]
     
-    qs = SkillUp.objects.filter(tier=tier)
-    df = read_frame(qs, fieldnames=columns)
+    columns = strListToQuots(columns)
+    query = "SELECT {} FROM public.stats_skillup".format(", ".join(columns))
+    df = pd.read_sql(query, conn)
     return df
 
 
-def get_first_buy_df(tier):
+def get_first_buy_df():
     """
     Devuelve el dataframe con los first_buy
     """
-    print("Solicitando first_buy up - {}".format(tier_n_to_name[tier]))
+    print("Solicitando first_buy")
     columns = ["tier","championId","role","lane"]
     for x in range(1,4):
         columns.extend(["item"+str(x), "item"+str(x)+"_n"])
-    qs = FirstBuy.objects.filter(tier=tier)
-    df = read_frame(qs, fieldnames=columns)
+    columns = strListToQuots(columns)
+    query = "SELECT {} FROM public.stats_firstbuy".format(", ".join(columns))
+    df = pd.read_sql(query, conn)
     return df
 
 
@@ -117,24 +130,24 @@ def generate_builds_stats_by_champ():
     # Filtro partidas por tier
     elos = POST_DIAMOND_TIERS+PRE_DIAMOND_TIERS
 
+    champ_data = get_champ_data_df()
+    champ_ban_data = get_bans_df()
+    playstyle_data = get_playstyle_df()
+    skill_data = get_skill_up_df()
+    first_buy_data = get_first_buy_df()
+
     df_by_elo={}
     # Agrego tier por tier
     for elo in elos:
+        t = tier_name_to_n[elo]
         df_by_elo[elo]={
-            "champ_data":get_champ_data_df(tier_name_to_n[elo]),
-            "champ_ban_data":get_bans_df(tier_name_to_n[elo]),
-            "playstyle_data":get_playstyle_df(tier_name_to_n[elo]),
-            "skill_data":get_skill_up_df(tier_name_to_n[elo]),
-            "first_buy_data":get_first_buy_df(tier_name_to_n[elo]),
+            "champ_data":champ_data.loc[champ_data['tier']==t],
+            "champ_ban_data":champ_ban_data.loc[champ_ban_data['tier']==t],
+            "playstyle_data":playstyle_data.loc[playstyle_data['tier']==t],
+            "skill_data":skill_data.loc[skill_data['tier']==t],
+            "first_buy_data":first_buy_data.loc[first_buy_data['tier']==t],
         }
-        df_by_elo[elo]['total_matches']=len( df_by_elo[elo]['champ_data'])/10
-
-    # Sumo total
-    champ_data = pd.concat([x['champ_data'] for x in df_by_elo.values()], ignore_index=True).reset_index()
-    champ_ban_data = pd.concat([x['champ_ban_data'] for x in df_by_elo.values()], ignore_index=True).reset_index()
-    playstyle_data = pd.concat([x['playstyle_data'] for x in df_by_elo.values()], ignore_index=True).reset_index()
-    skill_data = pd.concat([x['skill_data'] for x in df_by_elo.values()], ignore_index=True).reset_index()
-    first_buy_data = pd.concat([x['first_buy_data'] for x in df_by_elo.values()], ignore_index=True).reset_index()
+        df_by_elo[elo]['total_matches']=len(df_by_elo[elo]['champ_data'])/10
 
     df_by_elo['global']={"champ_data":champ_data,
              "champ_ban_data":champ_ban_data,
@@ -207,7 +220,6 @@ def generate_builds_stats_by_champ():
         final_data['lanes']=[]
         final_data['info_by_lane']=[]
 
-
         # Calculo fases
         final_data['phases_winrate']=get_phases(current_champ_rows)
 
@@ -223,6 +235,11 @@ def generate_builds_stats_by_champ():
             
             # Saco el nombre de la linea
             lane_name = get_lane_from_role({"role":str(role),"lane":str(lane)})
+
+            # Evito lineas repetidas
+            if lane_name in final_data['lanes']:
+                lanes = [x for ind, x in enumerate(lanes) if ind != i ]
+                continue
             lanes_names.append(lane_name)
             final_data['lanes'].append(lane_name)
             if not champ in byLane[lane_name]:

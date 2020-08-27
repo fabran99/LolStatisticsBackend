@@ -11,8 +11,9 @@ def get_mongo():
     Devuelve conexion con mongodb
     """
     client = pymongo.MongoClient(
-        host=settings.MONGO_DB_HOST,
-        port=27017
+        os.getenv("MONGO_DB_URI")
+        # host=settings.MONGO_DB_HOST,
+        # port=27017
     )
     return client
 
