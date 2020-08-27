@@ -11,7 +11,7 @@ from lol_stats_api.helpers.variables import MIN_GAME_DURATION, EARLY_GAME_RANGE,
     PHASE_BAD_RANGE, PHASE_GOOD_RANGE, PHASE_OK_RANGE
 
 from assets.get_assets_mongodb import *
-from lol_stats_api.helpers.mongodb import get_mongo_stats, get_monary
+from lol_stats_api.helpers.mongodb import get_mongo_stats
 import re
 import json
 from django.conf import settings

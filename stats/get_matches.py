@@ -7,7 +7,7 @@ from redis import Redis
 import os
 from bson import ObjectId
 
-from lol_stats_api.helpers.mongodb import  get_monary, get_mongo_stats
+from lol_stats_api.helpers.mongodb import   get_mongo_stats
 from lol_stats_api.helpers.variables import player_sample, HIGH_ELO_TIERS, LOW_ELO_TIERS, \
 POST_DIAMOND_TIERS, PRE_DIAMOND_TIERS,SMITE_SUMM
 from lol_stats_api.helpers.variables import SERVER_REAL_NAME_TO_ROUTE, RANKED_QUEUES, SERVER_ROUTES
@@ -28,7 +28,6 @@ db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
 db_matchlist = Redis(db=os.getenv("REDIS_GAMELIST_DB"))
 db_processed_match = Redis(db=os.getenv("REDIS_GAMEID_PROCESSED_DB"))
 
-monary_db = get_monary()
 
 # Variables generales
 columns = ['rank', 'tier', 'accountId',"last_time_searched","last_match_number","zero_matches_number","id"]

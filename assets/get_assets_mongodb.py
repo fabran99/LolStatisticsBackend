@@ -1,4 +1,4 @@
-from lol_stats_api.helpers.mongodb import get_monary, get_mongo_assets
+from lol_stats_api.helpers.mongodb import  get_mongo_assets
 
 db = get_mongo_assets()
 

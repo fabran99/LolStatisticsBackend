@@ -1,6 +1,5 @@
 import pymongo
 from django.conf import settings
-from monary import Monary
 from redis import Redis
 import os
 db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"), decode_responses=True)
@@ -34,14 +33,6 @@ def get_mongo_players():
     client = get_mongo()
     mongodb = client.players
     return mongodb
-
-
-def get_monary():
-    """
-    Devuelve conexion de monary
-    """
-    client = Monary(settings.MONGO_DB_HOST, 27017)
-    return client
 
 
 def get_mongo_stats():
