@@ -11,8 +11,9 @@ def get_mongo():
     Devuelve conexion con mongodb
     """
     client = pymongo.MongoClient(
-        host=settings.MONGO_DB_HOST,
-        port=27017
+        os.getenv("MONGO_DB_URI")
+        # host=settings.MONGO_DB_HOST,
+        # port=27017
     )
     return client
 
@@ -59,6 +60,7 @@ def get_saved_version():
     """
     current_version = db_metadata.get("current_version")
     return current_version
+
 
 def get_last_calculated_patch():
     """

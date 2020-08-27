@@ -1,7 +1,5 @@
 from django.conf import settings
 import pandas as pd
-from os import path
-from assets.get_assets_mongodb import *
 
 GRIETA = {
     "name":"Summoner's Rift",
@@ -57,9 +55,9 @@ SERVER_REAL_NAME_TO_ROUTE={
 
 
 MATCHES_STATS_KEYS=[
-    "win","item0","item1","item2","item3","item4","item5","item6","kills",\
-        "deaths","assists", "perk0","perk1","perk2","perk3","perk4","perk5",\
-                "perkPrimaryStyle","perkSubStyle","statPerk0","statPerk1","statPerk2"
+    "win","item0","item1","item2","item3","item4","item5","item6",\
+        "perk0","perk1","perk2","perk3","perk4","perk5",\
+        "perkPrimaryStyle","perkSubStyle","statPerk0","statPerk1","statPerk2"
 ]
 
 PLAYSTYLE_STATS_KEYS = [
@@ -75,22 +73,6 @@ POST_DIAMOND_TIERS=["challengers","masters","grandmasters"]
 PRE_DIAMOND_TIERS = ['IRON',"BRONZE","SILVER","GOLD","PLATINUM","DIAMOND"]
 
 
-# =================================
-# Item clases
-# =================================
-df_all_items = pd.DataFrame(get_all_items_data(final_form_only=False)).T[["name","id","price",'final_form',"tags"]]
-# Busco items que esten en su forma final
-df_items = pd.DataFrame(get_all_items_data(final_form_only=True)).T[["name","id","price",'final_form',"tags"]]
-# Items de vision
-trinkets = df_items.loc[((df_items['tags'].astype(str).str.contains("Trinket")))]['id'].tolist()
-# Items finales
-final_form_items = df_items.loc[~((df_items['tags'].astype(str).str.contains("Trinket|Consumable")))]['id'].unique()
-# Botas
-boots = df_items.loc[(df_items['tags'].astype(str).str.contains("Boots"))]['id'].tolist()
-# GoldPer
-support_items =  df_items.loc[((df_items['tags'].astype(str).str.contains("GoldPer")))]['id'].unique()
-# Jungle items
-jungle_items = df_items.loc[(df_items['name'].astype(str).str.contains("Encantamiento"))]['id'].unique()
 
 
 # Sample de jugadores
@@ -137,6 +119,7 @@ player_sample = {
     }
 
 
+# Conversion de int a datos
 division_name_to_n = {
     "I":1,
     "II":2,
@@ -209,8 +192,8 @@ tier_n_to_name={
 # Crontabs
 cron_players={
     "day_of_week":'0,3',
-    "hour":"4",
-    "minute":"38",
+    "hour":"18",
+    "minute":"30",
     "day_of_month":"*",
     "month_of_year":"*"
 }
