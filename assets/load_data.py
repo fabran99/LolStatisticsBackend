@@ -300,7 +300,7 @@ def load_rune_data(clean_load=False):
     perks = [{
         "id":5005,
         "name":"AttackSpeed",
-        "image":"http://ddragon.leagueoflegends.com/cdn/img/perk-images/StatMods/StatModsAdaptiveForceIcon.png",
+        "image":"http://ddragon.leagueoflegends.com/cdn/img/perk-images/StatMods/StatModsAttackSpeedIcon.png",
         "description":"+10% de Velocidad de Ataque"
     },{
         "id":5003,

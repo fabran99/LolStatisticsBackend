@@ -27,7 +27,7 @@ db_stats = get_mongo_stats()
 db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
 db_matchlist = Redis(db=os.getenv("REDIS_GAMELIST_DB"))
 db_processed_match = Redis(db=os.getenv("REDIS_GAMEID_PROCESSED_DB"))
-
+db_celery = Redis(db=os.getenv("CELERY_DB"), decode_responses=True)
 
 # Variables generales
 columns = ['rank', 'tier', 'accountId',"last_time_searched","last_match_number","zero_matches_number","id"]
@@ -82,9 +82,9 @@ def get_matches_sample_from_player_list(server="LAS"):
             match_number = len(game_list)
 
         print("{} partidas encontradas".format(str(match_number)))
-        # Si llevo 5 iteraciones y el jugador no tiene partidas, lo quito
-        if match_number == 0 and not np.isnan(row['zero_matches_number']) and int(row['zero_matches_number']) > 5:
-            print("Borrando jugador, 5 pasadas sin partidas\n")
+        # Si llevo 6 iteraciones y el jugador no tiene partidas, lo quito
+        if match_number == 0 and not np.isnan(row['zero_matches_number']) and int(row['zero_matches_number']) > 6:
+            print("Borrando jugador, 6 pasadas sin partidas\n")
             found =Player.objects.filter(id=row['id'])
             print(found)
             found.delete()
@@ -97,18 +97,14 @@ def get_matches_sample_from_player_list(server="LAS"):
         else:
             zero_matches_number = 0
 
-        update={
-            "$set":{
-                "last_match_number":match_number,
-                "last_time_searched":end_time,
-                "zero_matches_number":zero_matches_number,
-            }
-        }
-
         # db_players.player_list.update_one({"_id":ObjectId(row['_id'])}, update)
         pid = row['id']
-        del row['id']
-        Player.objects.filter(id=pid).update(**row)
+        update=row.to_dict() 
+        update["last_match_number"]=match_number
+        update["last_time_searched"]=end_time
+        update["zero_matches_number"]=zero_matches_number
+     
+        Player.objects.filter(id=pid).update(**update)
 
 
         # Reviso la info
@@ -121,10 +117,15 @@ def get_matches_sample_from_player_list(server="LAS"):
         for x in game_list:
             if not db_processed_match.get(x['gameId']):
                 db_matchlist.lpush(server, json.dumps(x))
-                # tasks.process_match_with_celery.delay(x)
+                db_matchlist.ltrim(server, 0, 100000)
 
-    # Actualizo la fecha final
-    # db_metadata.set("last_end_time_{}".format(server), end_time)
+
+        # Evito saturar el bandwidth de la key, disminuyendo las solicitudes
+        # en caso de que hayan muchas tareas acumuladas, y por ende, pidiendo datos
+        celery_length = db_celery.llen('celery')
+
+        if celery_length > 200:
+            sleep(50)
 
 
 def is_jungler(participant):
@@ -145,6 +146,7 @@ def process_match(match):
     timestamp = x_days_ago(3)
     # Datos ya procesados o de hace mas de 3 dias los ignoro
     if db_processed_match.get(match['gameId']) is not None or match['timestamp']<=timestamp:
+        print("Partida antigua")
         return 
     server = SERVER_REAL_NAME_TO_ROUTE[match['platformId']]
     match_detail = get_match_by_id(match['gameId'], server)

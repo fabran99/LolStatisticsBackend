@@ -136,7 +136,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Datos para las request
-API_KEY = os.getenv("API_KEY", None)
+API_KEYS = os.getenv("API_KEY", "").split(",")
 DEF_LANGUAGE = os.getenv("DEF_LANGUAGE", None)
 MONGO_DB_HOST = os.getenv("MONGO_DB_HOST", None)
 

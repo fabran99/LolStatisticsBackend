@@ -1,5 +1,6 @@
 from django.conf import settings
 import pandas as pd
+import random
 
 GRIETA = {
     "name":"Summoner's Rift",
@@ -19,9 +20,10 @@ GAME_TYPE="MATCHED_GAME"
 DIVISIONS=["I","II","III","IV"]
 TIERS=["DIAMOND","PLATINUM","GOLD","SILVER","BRONZE","IRON"]
 
-TOKEN_HEADER={
-    "X-Riot-Token": settings.API_KEY
-}
+def get_token_header():
+    return {
+        "X-Riot-Token": random.choice(settings.API_KEYS)
+    }
 
 SERVER_ROUTES={
     "LAS":"la2.api.riotgames.com",
@@ -191,9 +193,9 @@ tier_n_to_name={
 
 # Crontabs
 cron_players={
-    "day_of_week":'0,3',
-    "hour":"18",
-    "minute":"30",
+    "day_of_week":'0,2,5',
+    "hour":"15",
+    "minute":"5",
     "day_of_month":"*",
     "month_of_year":"*"
 }
