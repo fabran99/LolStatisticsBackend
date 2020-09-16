@@ -9,10 +9,7 @@ from lol_stats_api.helpers.variables import cron_players_text
 from stats.get_matches import x_days_ago
 from datetime import datetime as dt, timedelta as td
 import croniter
-
-
-db_matchlist = Redis(db=os.getenv("REDIS_GAMELIST_DB"), decode_responses=True)
-db_celery = Redis(db=os.getenv("CELERY_DB"), decode_responses=True)
+from lol_stats_api.helpers.redis import db_matchlist, db_celery
 
 
 def process_match_for_each_key():

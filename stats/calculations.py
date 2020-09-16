@@ -31,7 +31,7 @@ from assets.ddragon_routes import get_current_version
 import psycopg2
 from django_pandas.io import read_frame
 
-db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
+from lol_stats_api.helpers.redis import db_metadata
 
 stats_db = get_mongo_stats()
 

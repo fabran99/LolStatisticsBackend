@@ -23,11 +23,8 @@ from stats.models import *
 from django_pandas.io import read_frame
 
 db_stats = get_mongo_stats()
+from lol_stats_api.helpers.redis import db_metadata, db_matchlist,db_processed_match, db_celery
 
-db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
-db_matchlist = Redis(db=os.getenv("REDIS_GAMELIST_DB"))
-db_processed_match = Redis(db=os.getenv("REDIS_GAMEID_PROCESSED_DB"))
-db_celery = Redis(db=os.getenv("CELERY_DB"), decode_responses=True)
 
 # Variables generales
 columns = ['rank', 'tier', 'accountId',"last_time_searched","last_match_number","zero_matches_number","id"]

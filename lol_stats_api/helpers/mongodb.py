@@ -1,8 +1,7 @@
 import pymongo
 from django.conf import settings
-from redis import Redis
 import os
-db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"), decode_responses=True)
+from lol_stats_api.helpers.redis import db_metadata
 
 
 def get_mongo():

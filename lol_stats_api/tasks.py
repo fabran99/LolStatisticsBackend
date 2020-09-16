@@ -1,4 +1,5 @@
 from __future__ import absolute_import, unicode_literals
+from lol_stats_api.helpers.redis import db_metadata, db_matchlist
 from celery.decorators import task, periodic_task
 from celery.task.schedules import crontab
 from redis import Redis
@@ -26,8 +27,6 @@ def unlock_all(**kwargs):
     clear_locks(app)
 
 
-db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
-db_matchlist = Redis(db=os.getenv("REDIS_GAMELIST_DB"), decode_responses=True)
 db_stats = get_mongo_stats()
 
 

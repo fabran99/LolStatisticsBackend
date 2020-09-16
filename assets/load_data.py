@@ -12,8 +12,7 @@ from datetime import datetime as dt
 import re
 
 from redis import Redis
-
-db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
+from lol_stats_api.helpers.redis import db_metadata
 
 
 db = get_mongo_assets()
