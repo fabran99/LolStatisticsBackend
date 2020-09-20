@@ -11,7 +11,7 @@ from lol_stats_api.helpers.variables import MIN_GAME_DURATION, EARLY_GAME_RANGE,
     PHASE_BAD_RANGE, PHASE_GOOD_RANGE, PHASE_OK_RANGE
 
 from assets.get_assets_mongodb import *
-from lol_stats_api.helpers.mongodb import get_mongo_stats, get_monary
+from lol_stats_api.helpers.mongodb import get_mongo_stats
 import re
 import json
 from django.conf import settings
@@ -29,8 +29,9 @@ champs_by_id = get_all_champs_name_id()
 from lol_stats_api.helpers.mongodb import get_saved_version
 from assets.ddragon_routes import get_current_version
 import psycopg2
+from django_pandas.io import read_frame
 
-db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
+from lol_stats_api.helpers.redis import db_metadata
 
 stats_db = get_mongo_stats()
 
@@ -41,9 +42,6 @@ param_dic = {
     "password":os.environ.get('PSQL_PASSWORD')
 }
 
-conn = psycopg2.connect(**param_dic)
-cursor = conn.cursor()
-
 
 def strListToQuots(strs):
     return ['"{}"'.format(x) for x in strs]
@@ -53,6 +51,8 @@ def get_champ_data_df():
     """
     Devuelve el dataframe de datos de campeon
     """
+    conn = psycopg2.connect(**param_dic)
+    cursor = conn.cursor()
     print("Solicitando datos de campeones")
     columns = ['championId','teamId','role','lane','spell1Id','spell2Id',\
         'gameDuration','tier','gameId',\
@@ -70,6 +70,8 @@ def get_bans_df():
     """
     Devuelve el dataframe con los bans
     """
+    conn = psycopg2.connect(**param_dic)
+    cursor = conn.cursor()
     print("Solicitando bans")
     columns = ['championId', 'tier','win','gameId','teamId']
 
@@ -83,6 +85,8 @@ def get_playstyle_df():
     """
     Devuelve el dataframe con el playstyle
     """
+    conn = psycopg2.connect(**param_dic)
+    cursor = conn.cursor()
     print("Solicitando playstyle")
     columns = ['championId','totalMinionsKilled','neutralMinionsKilled','neutralMinionsKilledTeamJungle',\
         'neutralMinionsKilledEnemyJungle','gameDuration', 'tier','kills','deaths','assists',\
@@ -98,6 +102,8 @@ def get_skill_up_df():
     """
     Devuelve el dataframe con los level up
     """
+    conn = psycopg2.connect(**param_dic)
+    cursor = conn.cursor()
     print("Solicitando skills up")
     columns = ["tier","championId"] + ["_"+str(i+1) for i in range(18)]
     
@@ -111,6 +117,8 @@ def get_first_buy_df():
     """
     Devuelve el dataframe con los first_buy
     """
+    conn = psycopg2.connect(**param_dic)
+    cursor = conn.cursor()
     print("Solicitando first_buy")
     columns = ["tier","championId","role","lane"]
     for x in range(1,4):

@@ -9,10 +9,8 @@ from lol_stats_api.helpers.variables import cron_players_text
 from stats.get_matches import x_days_ago
 from datetime import datetime as dt, timedelta as td
 import croniter
+from lol_stats_api.helpers.redis import db_matchlist, db_celery
 
-
-db_matchlist = Redis(db=os.getenv("REDIS_GAMELIST_DB"), decode_responses=True)
-db_celery = Redis(db=os.getenv("CELERY_DB"), decode_responses=True)
 
 def process_match_for_each_key():
     """
@@ -27,9 +25,10 @@ def process_match_for_each_key():
             data_match = json.loads(match)
             timestamp = x_days_ago(3)
 
-            if match and data_match['timestamp']> timestamp:
+            if match and data_match['timestamp'] > timestamp:
                 print(data_match)
                 tasks.process_match_with_celery.delay(match)
+
 
 def check_player_update_running():
     """
@@ -41,9 +40,9 @@ def check_player_update_running():
     prev_exec = dt.fromtimestamp(cron.get_prev())
 
     offset_prev = td(minutes=10)
-    offset_next= td(hours=2)
+    offset_next = td(hours=2)
 
-    if next_exec <=now + offset_prev:
+    if next_exec <= now + offset_prev:
         # Si faltan menos de 10 minutos para correr el script dejo de procesar
         return True
 
@@ -56,9 +55,9 @@ class Command(BaseCommand):
             # Reviso que no este pidiendo datos de jugadores
             if check_player_update_running():
                 sleep(60*60)
-            # Evito saturar la cola de redis, solo envio partidas si 
+            # Evito saturar la cola de redis, solo envio partidas si
             # la cola tiene 50 o menos elementos
-            els = db_celery.llen('celery') 
+            els = db_celery.llen('celery')
             if els > 50:
                 print("Esperando a que la cola se vacie - {} elementos".format(els))
                 sleep(10)

@@ -1,4 +1,5 @@
 from __future__ import absolute_import, unicode_literals
+from lol_stats_api.helpers.redis import db_metadata, db_matchlist
 from celery.decorators import task, periodic_task
 from celery.task.schedules import crontab
 from redis import Redis
@@ -12,7 +13,7 @@ from lol_stats_api.helpers.mongodb import get_mongo_stats
 from celery.signals import worker_ready
 
 from assets.ddragon_routes import get_current_version
-from lol_stats_api.helpers.mongodb import get_saved_version
+from lol_stats_api.helpers.mongodb import get_saved_version, get_last_calculated_patch
 
 
 from stats.models import *
@@ -26,8 +27,6 @@ def unlock_all(**kwargs):
     clear_locks(app)
 
 
-db_metadata = Redis(db=os.getenv("REDIS_METADATA_DB"))
-db_matchlist = Redis(db=os.getenv("REDIS_GAMELIST_DB"), decode_responses=True)
 db_stats = get_mongo_stats()
 
 
@@ -82,15 +81,15 @@ def clear_data_from_3_days_ago():
     # Bans
     print("Eliminando bans")
     # db_stats.bans.remove({'timestamp':{"$lt":timestamp}})
-    Ban.objects.filter(timestamp__lt=more_time_ago).delete()
+    Ban.objects.filter(timestamp__lt=timestamp).delete()
     # Champ data
     print("Eliminando champ data")
     # db_stats.champ_data.remove({'timestamp':{"$lt":timestamp}})
-    ChampData.objects.filter(timestamp__lt=more_time_ago).delete()
+    ChampData.objects.filter(timestamp__lt=timestamp).delete()
     # Playstyle
     print("Eliminando champ playstyle")
     # db_stats.champ_playstyle.remove({'timestamp':{"$lt":timestamp}})
-    ChampPlaystyle.objects.filter(timestamp__lt=more_time_ago).delete()
+    ChampPlaystyle.objects.filter(timestamp__lt=timestamp).delete()
     print("Eliminando first buy")
     # db_stats.first_buy.remove({'timestamp':{"$lt":timestamp}})
     FirstBuy.objects.filter(timestamp__lt=more_time_ago).delete()
@@ -150,7 +149,7 @@ def generate_new_stats():
 
 # Assets
 @periodic_task(name="periodically_update_assets",
-               run_every=(crontab(minute='20', hour="*/6"))
+               run_every=(crontab(minute='20', hour="*/4"))
                )
 def periodically_update_assets():
     """
@@ -169,5 +168,8 @@ def update_assets():
     # Si la version es distinta actualizo
     if saved_version != game_version:
         load_data()
+
+    last_calculated_patch = get_last_calculated_patch()
+    if last_calculated_patch != game_version:
         # Recalculo las estadisticas
         generate_new_stats.delay()

@@ -1,4 +1,5 @@
 from datetime import datetime as dt
+import random
 import pandas as pd
 from time import sleep
 import json
@@ -48,9 +49,9 @@ def update_player_list(player_sample=player_sample, servers=SERVER_ROUTES.keys()
                     page = 1
 
                     if key in ["DIAMOND", "PLATINUM"]:
-                        page = 3
+                        page = random.randint(2, 5)
                     else:
-                        page = 1
+                        page = random.randint(1, 3)
 
                     while page > 0:
                         data = get_player_list_by_division(
@@ -97,10 +98,10 @@ def update_player_detail(current_player):
     data = get_player_by_id(
         current_player['summonerId'], current_player['server'])
 
-    if data is None:
-        sleep(10)
-        data = get_player_by_id(
-            current_player['summonerId'], current_player['server'])
+    # if data is None:
+    #     sleep(10)
+    #     data = get_player_by_id(
+    #         current_player['summonerId'], current_player['server'])
 
     if data is None or len(data) == 0:
         return
@@ -118,5 +119,5 @@ def update_player_detail(current_player):
 
     Player.objects.update_or_create(
         puuid=current_player['puuid'], defaults=current_player)
-
+    print("Jugador actualizado")
     # db_players.player_list.update_one(player_filter,update,upsert=True)
