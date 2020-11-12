@@ -13,8 +13,9 @@ df_items = pd.DataFrame(get_all_items_data(final_form_only=True)).T[[
 trinkets = df_items.loc[((df_items['tags'].astype(
     str).str.contains("Trinket")))]['id'].tolist()
 # Items finales
-final_form_items = df_items.loc[~((df_items['tags'].astype(
-    str).str.contains("Trinket|Consumable")))]['id'].unique()
+final_form_items = df_items.loc[~(df_items['tags'].astype(
+    str).str.contains("Trinket|Consumable")) &
+    ~(df_items['name'].astype(str).str.contains("Encantamiento"))]['id'].unique()
 # Botas
 boots = df_items.loc[(df_items['tags'].astype(
     str).str.contains("Boots"))]['id'].tolist()
@@ -22,5 +23,5 @@ boots = df_items.loc[(df_items['tags'].astype(
 support_items = df_items.loc[(
     (df_items['tags'].astype(str).str.contains("GoldPer")))]['id'].unique()
 # Jungle items
-jungle_items = df_items.loc[(df_items['name'].astype(
-    str).str.contains("Encantamiento"))]['id'].unique()
+jungle_items = df_items.loc[(df_items['tags'].astype(
+    str).str.contains("Jungle"))]['id'].unique()

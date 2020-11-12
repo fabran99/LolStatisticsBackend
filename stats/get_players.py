@@ -49,7 +49,7 @@ def update_player_list(player_sample=player_sample, servers=SERVER_ROUTES.keys()
                     page = 1
 
                     if key in ["DIAMOND", "PLATINUM"]:
-                        page = random.randint(2, 5)
+                        page = random.randint(4, 6)
                     else:
                         page = random.randint(1, 3)
 

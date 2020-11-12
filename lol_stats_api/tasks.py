@@ -6,7 +6,7 @@ from redis import Redis
 from celery_singleton import Singleton, clear_locks
 import os
 from datetime import datetime as dt, timedelta as td
-from lol_stats_api.helpers.variables import player_sample, cron_players
+from lol_stats_api.helpers.variables import player_sample, cron_players, LAST_IMPORTANT_PATCH
 from stats import get_players, get_matches, calculations
 from assets.load_data import load_data
 from lol_stats_api.helpers.mongodb import get_mongo_stats
@@ -70,6 +70,10 @@ def clear_data_from_3_days_ago():
     """
     timestamp = get_matches.x_days_ago(3)
     more_time_ago = get_matches.x_days_ago(5)
+
+    # Parche 10.23 en adelante
+    timestamp = max(LAST_IMPORTANT_PATCH, timestamp)
+    timestamp = max(LAST_IMPORTANT_PATCH, more_time_ago)
     print("Eliminando datos anteriores a {}".format(timestamp))
     # Timelines
     print("Eliminando timelines")
