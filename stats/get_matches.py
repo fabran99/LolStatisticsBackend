@@ -69,7 +69,7 @@ def get_matches_sample_from_player_list(server="LAS"):
             row['accountId'], server, str(index+1), str(len(df))))
         begin_time = x_days_ago(3)
         # Parche 10.23 en adelante
-        begin_time = max(LAST_IMPORTANT_PATCH, more_time_ago)
+        begin_time = max(LAST_IMPORTANT_PATCH, begin_time)
 
         if row['last_time_searched'] is not None and not np.isnan(row['last_time_searched']):
             begin_time = max(row['last_time_searched'], begin_time)
