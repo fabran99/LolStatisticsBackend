@@ -18,7 +18,7 @@ def get_all_from_redis():
             print(e)
     return response
 
-class MainListView(viewsets.ViewSet):
+class ExtraView(viewsets.ViewSet):
     def get(self, request):
         response = get_all_from_redis()
 
