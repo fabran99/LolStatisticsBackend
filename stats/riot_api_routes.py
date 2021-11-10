@@ -11,12 +11,16 @@ def get_data_or_none(url):
         r = requests.get(url, headers=get_token_header())
         if r.status_code == 200:
             return r.json()
+        else:
+            print(r.json())
     except requests.exceptions.ConnectionError:
         sleep(35)
         try:
             r = requests.get(url, headers=get_token_header())
             if r.status_code == 200:
                 return r.json()
+            else:
+                print(r.json())
         except:
             return None
 
@@ -85,7 +89,9 @@ def get_matchlist_by_account_id(id, region, only_ranked=False, endIndex=100, beg
     if endTime is not None:
         url += "&endTime="+str(endTime)
 
+    print(url)
     response = get_data_or_none(url)
+    print(response)
     if response is None:
         return None
     return response['matches']

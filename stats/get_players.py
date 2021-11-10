@@ -28,6 +28,7 @@ def update_player_list(player_sample=player_sample, servers=SERVER_ROUTES.keys()
             if key in POST_DIAMOND_TIERS:
                 print("{} en {}".format(key, server))
                 data = get_high_elo_player_list_by_elo(key, server)
+                print(data)
                 if data is None or len(data['entries']) == 0:
                     continue
                 data = data['entries']
@@ -66,6 +67,7 @@ def update_player_list(player_sample=player_sample, servers=SERVER_ROUTES.keys()
                             data)[['summonerId', "summonerName", "rank", "tier", "inactive"]]
                         df_data = df_data.loc[~(df_data['inactive'])]
                         df_data['server'] = server
+                        print(df_data)
 
                         sample = min(div_num, len(df_data))
                         df_data = df_data.sample(sample)

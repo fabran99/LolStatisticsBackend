@@ -24,7 +24,7 @@ TIERS = ["DIAMOND", "PLATINUM", "GOLD", "SILVER", "BRONZE", "IRON"]
 
 def get_token_header():
     return {
-        "X-Riot-Token": random.choice(settings.API_KEYS)
+        "X-Riot-Token":settings.API_KEYS[0] #random.choice(settings.API_KEYS)
     }
 
 

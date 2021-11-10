@@ -423,7 +423,7 @@ def generate_builds_stats_by_champ():
 def get_first_buy(data):
     df = data.copy()[["item1", "item2", "item3"]]
     groups = df.groupby(df.columns.tolist(), as_index=False).size()\
-        .reset_index().rename(columns={0: "records"}).sort_values("records", ascending=False).reset_index(drop=True)
+        .reset_index().rename(columns={"size": "records"}).sort_values("records", ascending=False).reset_index(drop=True)
 
     best_order = groups.iloc[0].to_dict()
     final_buy = []
@@ -438,9 +438,10 @@ def get_first_buy(data):
 def get_skill_order(champ_data):
     df = champ_data[["_"+str(x+1) for x in range(18)]]
     groups = df.groupby(df.columns.tolist(), as_index=False).size()\
-        .reset_index().rename(columns={0: "records"}).sort_values("records", ascending=False).reset_index(drop=True)
-
+        .reset_index(drop=True).rename(columns={'size': "records"}).sort_values("records", ascending=False).reset_index(drop=True)
+    print(groups)
     best_order = groups.iloc[0].to_dict()
+    print(best_order)
     best_order = {x.split("_")[1]: int(y)
                   for x, y in best_order.items() if x not in ["records"]}
     return best_order
@@ -458,6 +459,7 @@ def generate_champ_data(champ_data_original, lane):
     for x in range(6):
         final_items = champ_data.loc[champ_data['item' +
                                                 str(x)].isin(final_form_items)][['item'+str(x), "win"]]
+
 
         # Si no es support, quito los items de support
         if lane != "Support":

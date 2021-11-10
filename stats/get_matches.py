@@ -64,6 +64,7 @@ def get_matches_sample_from_player_list(server="LAS"):
     oldest_searched = oldest_searched.sort_values(
         ['last_match_number'], ascending=False)
     df = oldest_searched.append(newest_searched).reset_index(drop=True)
+    df = df.replace(to_replace=[None],value=np.nan)
     for index, row in df.iterrows():
         print("Trayendo partidas de {} ({}) {} de {}".format(
             row['accountId'], server, str(index+1), str(len(df))))
@@ -73,13 +74,15 @@ def get_matches_sample_from_player_list(server="LAS"):
 
         if row['last_time_searched'] is not None and not np.isnan(row['last_time_searched']):
             begin_time = max(row['last_time_searched'], begin_time)
-
+        
+        
         begin_time = int(begin_time)
-
         end_time = x_days_ago(0)
+        # print(begin_time, end_time)
         # Traigo la lista de datos
         game_list = get_matchlist_by_account_id(
-            row['accountId'], server, only_ranked=True, endIndex=20, beginTime=begin_time, endTime=end_time)
+            row['accountId'], server, only_ranked=False, endIndex=20, beginTime=begin_time, endTime=end_time)
+        print(game_list)
         # Actualizo la cantidad de partidas del jugador
         match_number = 0
         if game_list is not None:
