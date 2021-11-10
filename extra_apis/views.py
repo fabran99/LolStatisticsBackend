@@ -3,7 +3,6 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 import pickle
 
-from .serializers import *
 from redis import Redis 
 import os
 
