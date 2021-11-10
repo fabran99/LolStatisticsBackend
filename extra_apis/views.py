@@ -13,7 +13,7 @@ def get_all_from_redis():
 
     for key in db_extra_data.keys():
         try:
-            response[str(key)] = pickle.loads(db_extra_data.get(key))
+            response[key.decode("utf-8")] = pickle.loads(db_extra_data.get(key))
         except Exception as e:
             print(e)
     return response
