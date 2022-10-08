@@ -213,19 +213,25 @@ def generate_builds_stats_by_champ():
         # Detecto lineas
         lane_distribution = current_champ_rows['lane'].value_counts()
         main_lane = lane_distribution.index.tolist()[0]
-        second_lane = lane_distribution.index.tolist()[1]
-        total = lane_distribution.iloc[0] + lane_distribution.iloc[1]
         lanes = [main_lane]
-        # Porcentaje en cada linea
-        main_lane_percent = lane_distribution.iloc[0] * 100/total
-        second_lane_percent = lane_distribution.iloc[1] * 100/total
-        percents = [main_lane_percent, second_lane_percent]
+        percents = [100]
+        if len(lane_distribution) > 1:
+            second_lane = lane_distribution.index.tolist()[1]
+            total = lane_distribution.iloc[0] + lane_distribution.iloc[1]
+            # Porcentaje en cada linea
+            main_lane_percent = lane_distribution.iloc[0] * 100/total
+            second_lane_percent = lane_distribution.iloc[1] * 100/total
+            percents = [main_lane_percent, second_lane_percent]
 
-        # Si la linea secundaria tiene mas del 20% de uso entonces la muestro
-        if second_lane_percent >= 30:
-            lanes.append(second_lane)
+            # Si la linea secundaria tiene mas del 20% de uso entonces la muestro
+            if second_lane_percent >= 30:
+                lanes.append(second_lane)
+            else:
+                percents = [100]
         else:
-            percents = [100]
+            print("Este no funciona")
+            continue # @TODO Quitar
+            
 
         final_data['lanes'] = []
         final_data['info_by_lane'] = []
@@ -351,6 +357,8 @@ def generate_builds_stats_by_champ():
         general_stats.append(final_data)
 
     for champ in champs:
+        if not champ in champKeys.keys():
+            continue
         lanes = general_stats[champKeys[champ]]['lanes']
         champsInLane = []
         for x in lanes:
@@ -655,10 +663,13 @@ def get_lane_from_role(data):
     elif lane == "JUNGLE":
         return "Jungla"
     elif lane == "BOTTOM":
-        if role == "DUO_CARRY":
-            return "ADC"
-        else:
-            return "Support"
+        return "ADC"
+    elif lane == "UTILITY":
+        return "Support"
+        # if role == "DUO_CARRY":
+        #     return "ADC"
+        # else:
+        #     return "Support"
 
     return "Jungla"
 

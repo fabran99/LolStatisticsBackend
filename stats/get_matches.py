@@ -16,7 +16,7 @@ from lol_stats_api.helpers.variables import DIVISIONS, TIERS
 from lol_stats_api.helpers.variables import SERVER_ROUTES, SERVER_REAL_NAME_TO_ROUTE
 from lol_stats_api.helpers.variables import MATCHES_STATS_KEYS, PLAYSTYLE_STATS_KEYS
 from lol_stats_api.helpers.variables import tier_name_to_n, role_name_to_n, division_name_to_n, lane_name_to_n
-from stats.riot_api_routes import get_matchlist_by_account_id, get_match_by_id, get_timelist_by_match_id
+from stats.riot_api_routes import get_matchlist_by_account_id, get_match_by_id, get_matchlist_by_puuid_id, get_timelist_by_match_id
 from lol_stats_api import tasks
 
 from stats.models import *
@@ -28,7 +28,7 @@ db_stats = get_mongo_stats()
 
 # Variables generales
 columns = ['rank', 'tier', 'accountId', "last_time_searched",
-           "last_match_number", "zero_matches_number", "id"]
+           "last_match_number", "zero_matches_number", "id","puuid"]
 
 
 def x_days_ago(days):
@@ -52,7 +52,7 @@ def get_matches_sample_from_player_list(server="LAS"):
         print("No hay jugadores guardados")
         return
 
-    df = df.loc[df['accountId'].notna()]
+    df = df.loc[df['puuid'].notna()]
     df = df.sort_values(['last_time_searched'],
                         ascending=True).reset_index(drop=True)
 
@@ -67,7 +67,7 @@ def get_matches_sample_from_player_list(server="LAS"):
     df = df.replace(to_replace=[None],value=np.nan)
     for index, row in df.iterrows():
         print("Trayendo partidas de {} ({}) {} de {}".format(
-            row['accountId'], server, str(index+1), str(len(df))))
+            row['puuid'], server, str(index+1), str(len(df))))
         begin_time = x_days_ago(3)
         # Parche 10.23 en adelante
         begin_time = max(LAST_IMPORTANT_PATCH, begin_time)
@@ -75,13 +75,12 @@ def get_matches_sample_from_player_list(server="LAS"):
         if row['last_time_searched'] is not None and not np.isnan(row['last_time_searched']):
             begin_time = max(row['last_time_searched'], begin_time)
         
-        
         begin_time = int(begin_time)
         end_time = x_days_ago(0)
         # print(begin_time, end_time)
         # Traigo la lista de datos
-        game_list = get_matchlist_by_account_id(
-            row['accountId'], server, only_ranked=False, endIndex=20, beginTime=begin_time, endTime=end_time)
+        game_list = get_matchlist_by_puuid_id(
+            row['puuid'], server, only_ranked=True, endIndex=20, beginTime=begin_time, endTime=end_time)
         print(game_list)
         # Actualizo la cantidad de partidas del jugador
         match_number = 0
@@ -118,14 +117,26 @@ def get_matches_sample_from_player_list(server="LAS"):
         if game_list is None or len(game_list) == 0:
             continue
 
-        game_list = [{**x, "division": row['rank'], "tier":row['tier']}
+        game_list = [{"gameId":x, "division": row['rank'], "tier":row['tier']}
                      for x in game_list]
 
         # Mando las partidas a redis
         for x in game_list:
             if not db_processed_match.get(x['gameId']):
-                db_matchlist.lpush(server, json.dumps(x))
-                db_matchlist.ltrim(server, 0, 100000)
+                match_detail = get_match_by_id(x['gameId'], server)
+                
+                #Reintento
+                if match_detail is not None:
+                    sleep(5)
+                    match_detail = get_match_by_id(x['gameId'], server)
+                
+                if match_detail is not None:
+                    full_data = x.copy()
+                    full_data['match_detail'] = match_detail['info']
+                    full_data['timestamp'] = full_data['match_detail']['gameEndTimestamp']
+
+                    db_matchlist.lpush(server, json.dumps(full_data))
+                    db_matchlist.ltrim(server, 0, 100000)
 
         # Evito saturar el bandwidth de la key, disminuyendo las solicitudes
         # en caso de que hayan muchas tareas acumuladas, y por ende, pidiendo datos
@@ -139,7 +150,7 @@ def is_jungler(participant):
     """
     Returna si el participante es jungla o no
     """
-    if SMITE_SUMM in [participant['spell1Id'], participant['spell2Id']] and participant['lane'] in [lane_name_to_n['JUNGLE'], lane_name_to_n['NONE']]:
+    if SMITE_SUMM in [participant['spell1Id'], participant['spell2Id']] and participant['lane'] in [lane_name_to_n['JUNGLE']]:
         return True
 
     return False
@@ -155,22 +166,24 @@ def process_match(match):
     if db_processed_match.get(match['gameId']) is not None or match['timestamp'] <= timestamp:
         print("Partida antigua")
         return
-    server = SERVER_REAL_NAME_TO_ROUTE[match['platformId']]
-    match_detail = get_match_by_id(match['gameId'], server)
+    match_detail = match['match_detail']
+    server = SERVER_REAL_NAME_TO_ROUTE[match_detail['platformId']]
 
-    if match_detail is None:
-        sleep(10)
-        match_detail = get_match_by_id(match['gameId'], server)
+    # if match_detail is None:
+    #     sleep(10)
+    #     match_detail = get_match_by_id(match['gameId'], server)
 
-    # Reintento con cada partida hasta 3 veces
-    if match_detail is None or len(match_detail) == 0:
-        match['retries'] = 1 if "retries" not in match else int(
-            match['retries'])+1
-        if match['retries'] >= 3:
-            return
-        else:
-            db_matchlist.rpush(server, json.dumps(match))
-            return
+    # # Reintento con cada partida hasta 3 veces
+    # if match_detail is None:
+    #     match['retries'] = 1 if "retries" not in match else int(
+    #         match['retries'])+1
+    #     if match['retries'] >= 3:
+    #         return
+    #     else:
+    #         db_matchlist.rpush(server, json.dumps(match))
+    #         return
+    # else:
+    #     match_detail = match_detail['info']
 
     bans = []
     c_data = []
@@ -188,7 +201,7 @@ def process_match(match):
                     "division": division_name_to_n[match['division']],
                     "tier": tier_name_to_n[match['tier']],
                     "win": team['win'] == "Win",
-                    "gameId": match['gameId'],
+                    "gameId": match_detail['gameId'],
                     "teamId": team['teamId'],
                     "server": server,
                     "timestamp": match["timestamp"]
@@ -203,8 +216,8 @@ def process_match(match):
         participant_id_champ[participant['participantId']
                              ] = participant['championId']
         participant_id_datarole[participant['participantId']] = {
-            "role": role_name_to_n[participant['timeline']['role']],
-            "lane": lane_name_to_n[participant['timeline']['lane']],
+            "role": role_name_to_n['NONE'],
+            "lane": lane_name_to_n[participant['individualPosition']],
             "championId": participant['championId'],
             "tier": tier_name_to_n[match['tier']],
             "division": division_name_to_n[match['division']],
@@ -213,25 +226,38 @@ def process_match(match):
         # Campeones
         data = {
             "championId": participant['championId'],
-            "teamId": participant['teamId'],
-            "role": role_name_to_n[participant['timeline']['role']],
-            "lane": lane_name_to_n[participant['timeline']['lane']],
-            "spell1Id": participant['spell1Id'],
-            "spell2Id": participant['spell2Id'],
+            "teamId":  participant['teamId'],
+            "role": role_name_to_n['NONE'], #role_name_to_n[participant['lane']],
+            "lane": lane_name_to_n[participant['individualPosition']],
+            "spell1Id": participant['summoner1Id'],
+            "spell2Id": participant['summoner2Id'],
             "gameDuration": match_detail['gameDuration'],
             "tier": tier_name_to_n[match['tier']],
             "division": division_name_to_n[match['division']],
-            "gameId": match['gameId'],
+            "gameId": match_detail['gameId'],
             "server": server,
             "participantId": participant['participantId'],
-            "timestamp": match["timestamp"]
+            "timestamp": match["timestamp"],
+            # Estadisticas
+            "win":participant['win'],
+            "perkPrimaryStyle": participant['perks']['styles'][0]['style'],
+            "perkSubStyle": participant['perks']['styles'][1]['style'],
+            "statPerk0": participant['perks']['statPerks']['offense'],
+            "statPerk1": participant['perks']['statPerks']['flex'],
+            "statPerk2": participant['perks']['statPerks']['defense'],
+            "perk0": participant['perks']['styles'][0]['selections'][0]['perk'],
+            "perk1": participant['perks']['styles'][0]['selections'][1]['perk'],
+            "perk2": participant['perks']['styles'][0]['selections'][2]['perk'],
+            "perk3": participant['perks']['styles'][0]['selections'][3]['perk'],
+            "perk4": participant['perks']['styles'][1]['selections'][0]['perk'],
+            "perk5": participant['perks']['styles'][1]['selections'][1]['perk'],
         }
         if is_jungler(data):
             jungler_list.append(data)
 
-        for x in MATCHES_STATS_KEYS:
-            if x in participant['stats']:
-                data[x] = participant['stats'][x]
+        for x in [x for x in MATCHES_STATS_KEYS if "item" in x]:
+            if x in participant:
+                data[x] = participant[x]
 
         c_data.append(data)
 
@@ -239,19 +265,22 @@ def process_match(match):
         playstyle = {
             "championId": participant['championId'],
             "teamId": participant['teamId'],
-            "role": role_name_to_n[participant['timeline']['role']],
-            "lane": lane_name_to_n[participant['timeline']['lane']],
+            "role": role_name_to_n["NONE"],
+            "lane": lane_name_to_n[participant['individualPosition']],
             "gameDuration": match_detail['gameDuration'],
             "tier": tier_name_to_n[match['tier']],
             "division": division_name_to_n[match['division']],
-            "gameId": match['gameId'],
+            "gameId": match_detail['gameId'],
             "server": server,
-            "timestamp": match["timestamp"]
+            "timestamp": match["timestamp"],
         }
 
+
         for x in PLAYSTYLE_STATS_KEYS:
-            if x in participant['stats']:
-                playstyle[x] = participant['stats'][x]
+            if x in participant.keys():
+                playstyle[x] = participant[x]
+            else:
+                playstyle[x] = 0
 
         c_pstyle.append(playstyle)
 
@@ -263,6 +292,8 @@ def process_match(match):
         sleep(10)
         timelist_data = get_timelist_by_match_id(match['gameId'], server)
 
+    if timelist_data:
+        timelist_data = timelist_data['info']
     if timelist_data and 'frames' in timelist_data:
         # Primero solicito la info de los junglas
         for jungler in jungler_list:

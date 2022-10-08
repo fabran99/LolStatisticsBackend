@@ -8,3 +8,4 @@ from .business import get_main_list
 class MainListView(viewsets.ViewSet):
     def get(self, request):
         return get_main_list()
+

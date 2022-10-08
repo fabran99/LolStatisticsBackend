@@ -137,6 +137,7 @@ STATIC_URL = '/static/'
 
 # Datos para las request
 API_KEYS = os.getenv("API_KEY", "").split(",")
+INGAME_CALLS_API_KEY = os.getenv("INGAME_CALLS_API_KEY", "")
 DEF_LANGUAGE = os.getenv("DEF_LANGUAGE", None)
 MONGO_DB_HOST = os.getenv("MONGO_DB_HOST", None)
 

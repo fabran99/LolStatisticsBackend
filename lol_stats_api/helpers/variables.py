@@ -22,27 +22,59 @@ DIVISIONS = ["I", "II", "III", "IV"]
 TIERS = ["DIAMOND", "PLATINUM", "GOLD", "SILVER", "BRONZE", "IRON"]
 
 
-def get_token_header():
-    return {
-        "X-Riot-Token":settings.API_KEYS[0] #random.choice(settings.API_KEYS)
-    }
-
-
 SERVER_ROUTES = {
     "LAS": "la2.api.riotgames.com",
+    "EUN": "eun1.api.riotgames.com",
     "LAN": "la1.api.riotgames.com",
+    "OC": "oc1.api.riotgames.com",
     "KR": "kr.api.riotgames.com",
     "JP": "jp1.api.riotgames.com",
+    "RU": "ru.api.riotgames.com",
     "BR": "br1.api.riotgames.com",
-    "NA": "na1.api.riotgames.com",
-    "EUN": "eun1.api.riotgames.com",
     "EUW": "euw1.api.riotgames.com",
-    "OC": "oc1.api.riotgames.com",
+    "NA": "na1.api.riotgames.com",
     "TR": "tr1.api.riotgames.com",
-    "RU": "ru.api.riotgames.com"
 }
 
+
+SERVER_ROUTES_API_KEYS = {
+    "LAS": settings.API_KEYS[0],
+    "LAN": settings.API_KEYS[0],
+    "KR": settings.API_KEYS[0],
+    "JP": settings.API_KEYS[0],
+    "BR": settings.API_KEYS[0],
+    "NA": settings.API_KEYS[0],
+    "EUN": settings.API_KEYS[1],
+    "EUW": settings.API_KEYS[1],
+    "OC": settings.API_KEYS[1],
+    "TR": settings.API_KEYS[1],
+    "RU": settings.API_KEYS[1]
+}
+
+MATCHLIST_SERVER_ROUTES = {
+    "LAS":"americas.api.riotgames.com",
+    "LAN":"americas.api.riotgames.com",
+    "BR":"americas.api.riotgames.com",
+    "NA":"americas.api.riotgames.com",
+    "KR":"asia.api.riotgames.com",
+    "JP":"asia.api.riotgames.com",
+    "EUN":"europe.api.riotgames.com",
+    "EUW":"europe.api.riotgames.com",
+    "TR":"europe.api.riotgames.com",
+    "RU":"europe.api.riotgames.com",
+    "OC":"sea.api.riotgames.com",
+}
+
+
+
+def get_token_header(token=None):
+    if token is None:
+        token = settings.API_KEYS[0]
+    return {
+        "X-Riot-Token":token #random.choice(settings.API_KEYS)
+    }
 RANKED_QUEUES = [420, 440]
+SOLO_QUEUE = 420
 
 SERVER_REAL_NAME_TO_ROUTE = {
     "BR1": "BR",
@@ -82,43 +114,43 @@ PRE_DIAMOND_TIERS = ['IRON', "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND"]
 # Sample de jugadores
 player_sample = {
     "DIAMOND": {
-        "I": 400,
-        "II": 400,
-        "III": 400,
-        "IV": 400
+        "I": 200,
+        "II": 200,
+        "III": 200,
+        "IV": 200
     },
     "challengers": 300,
     "masters": 300,
     "grandmasters": 300,
     "PLATINUM": {
-        "I": 400,
-        "II": 400,
-        "III": 400,
-        "IV": 400
+        "I": 100,
+        "II": 100,
+        "III": 100,
+        "IV": 100
     },
     "GOLD": {
-        "I": 60,
-        "II": 60,
-        "III": 60,
-        "IV": 60
+        "I": 10,
+        "II": 10,
+        "III": 10,
+        "IV": 10
     },
     "SILVER": {
-        "I": 60,
-        "II": 60,
-        "III": 60,
-        "IV": 60
+        "I": 10,
+        "II": 10,
+        "III": 10,
+        "IV": 10
     },
     "BRONZE": {
-        "I": 60,
-        "II": 60,
-        "III": 60,
-        "IV": 60
+        "I": 10,
+        "II": 10,
+        "III": 10,
+        "IV": 10
     },
     "IRON": {
-        "I": 60,
-        "II": 60,
-        "III": 60,
-        "IV": 60
+        "I": 10,
+        "II": 10,
+        "III": 10,
+        "IV": 10
     },
 }
 
@@ -142,14 +174,14 @@ lane_name_to_n = {
     "JUNGLE": 2,
     "MIDDLE": 3,
     "TOP": 4,
-    "NONE": 5
+    "UTILITY": 5
 }
 lane_n_to_name = {
     1: "BOTTOM",
     2: "JUNGLE",
     3: "MIDDLE",
     4: "TOP",
-    5: "NONE"
+    5: "UTILITY"
 }
 
 role_name_to_n = {
@@ -195,8 +227,8 @@ tier_n_to_name = {
 
 # Crontabs
 cron_players = {
-    "day_of_week": '0,2,3,4,5',
-    "hour": "13",
+    "day_of_week": '0,4',
+    "hour": "5",
     "minute": "47",
     "day_of_month": "*",
     "month_of_year": "*"

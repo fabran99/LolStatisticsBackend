@@ -18,7 +18,7 @@ final_form_items = df_items.loc[~(df_items['tags'].astype(
     ~(df_items['name'].astype(str).str.contains("Encantamiento"))]['id'].astype(int).unique()
 # Botas
 boots = df_items.loc[(df_items['tags'].astype(
-    str).str.contains("Boots"))]['id'].tolist()
+    str).str.contains("Boots"))]['id'].astype(int).unique()
 # GoldPer
 support_items = df_items.loc[(
     (df_items['tags'].astype(str).str.contains("GoldPer")))]['id'].astype(int).unique()
