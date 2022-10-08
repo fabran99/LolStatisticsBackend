@@ -13,15 +13,15 @@ df_items = pd.DataFrame(get_all_items_data(final_form_only=True)).T[[
 trinkets = df_items.loc[((df_items['tags'].astype(
     str).str.contains("Trinket")))]['id'].astype(int).tolist()
 # Items finales
-final_form_items = df_items.loc[~(df_items['tags'].astype(
+final_form_items = list(df_items.loc[~(df_items['tags'].astype(
     str).str.contains("Trinket|Consumable")) &
-    ~(df_items['name'].astype(str).str.contains("Encantamiento"))]['id'].astype(int).unique()
+    ~(df_items['name'].astype(str).str.contains("Encantamiento"))]['id'].astype(int).unique())
 # Botas
-boots = df_items.loc[(df_items['tags'].astype(
-    str).str.contains("Boots"))]['id'].astype(int).unique()
+boots = list(df_items.loc[(df_items['tags'].astype(
+    str).str.contains("Boots"))]['id'].astype(int).unique())
 # GoldPer
-support_items = df_items.loc[(
-    (df_items['tags'].astype(str).str.contains("GoldPer")))]['id'].astype(int).unique()
+support_items = list(df_items.loc[(
+    (df_items['tags'].astype(str).str.contains("GoldPer")))]['id'].astype(int).unique())
 # Jungle items
-jungle_items = df_items.loc[(df_items['tags'].astype(
-    str).str.contains("Jungle"))]['id'].astype(int).unique()
+jungle_items = list(df_items.loc[(df_items['tags'].astype(
+    str).str.contains("Jungle"))]['id'].astype(int).unique())

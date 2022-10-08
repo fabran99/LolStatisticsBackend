@@ -5,9 +5,11 @@ import pickle
 if os.getenv("IS_PROD"):
     db_metadata = Redis(host=os.getenv("REDIS_METADATA_HOST"),
                         db=os.getenv("REDIS_METADATA_DB"), password=os.getenv("REDIS_METADATA_PASSWORD"), decode_responses=True)
+    db_gameids = Redis(db=os.getenv("REDIS_GAMEID_LIST_DB"), host=os.getenv("REDIS_GAMEID_LIST_HOST") ,password=os.getenv("REDIS_METADATA_PASSWORD"))
 else:
     db_metadata = Redis(host=os.getenv("REDIS_METADATA_HOST"),
                         db=os.getenv("REDIS_METADATA_DB"), decode_responses=True)
+    db_gameids = Redis(db=os.getenv("REDIS_GAMEID_LIST_DB"), host=os.getenv("REDIS_GAMEID_LIST_HOST"))
 
 db_matchlist = Redis(db=os.getenv("REDIS_GAMELIST_DB"),
                      decode_responses=True)
@@ -16,7 +18,7 @@ db_celery = Redis(db=os.getenv("CELERY_DB"), decode_responses=True)
 
 
 # ID de partidas por endpoint
-db_gameids = Redis(db=os.getenv("REDIS_GAMEID_LIST_DB"), host=os.getenv("REDIS_GAMEID_LIST_HOST"))
+
 def get_gameid(username, region):
     data = db_gameids.get("{}:{}".format(username, region))
     if data is not None:

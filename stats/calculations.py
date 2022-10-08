@@ -447,9 +447,7 @@ def get_skill_order(champ_data):
     df = champ_data[["_"+str(x+1) for x in range(18)]]
     groups = df.groupby(df.columns.tolist(), as_index=False).size()\
         .reset_index(drop=True).rename(columns={'size': "records"}).sort_values("records", ascending=False).reset_index(drop=True)
-    print(groups)
     best_order = groups.iloc[0].to_dict()
-    print(best_order)
     best_order = {x.split("_")[1]: int(y)
                   for x, y in best_order.items() if x not in ["records"]}
     return best_order
@@ -698,10 +696,10 @@ def get_kda(data):
 
 
 def get_farm(data):
-    data['farm'] = data['totalMinionsKilled']+data['neutralMinionsKilled'] + \
-        data['neutralMinionsKilledTeamJungle'] + \
-        data['neutralMinionsKilledEnemyJungle']
-    return round(((data['farm']/data['gameDuration'])*60).mean(), 2)
+    farm_data = data['totalMinionsKilled'].copy()+data['neutralMinionsKilled'].copy() + \
+        data['neutralMinionsKilledTeamJungle'].copy() + \
+        data['neutralMinionsKilledEnemyJungle'].copy()
+    return round(((farm_data/data['gameDuration'])*60).mean(), 2)
 
 
 def get_counters(data, champ, same_lane_champs):
