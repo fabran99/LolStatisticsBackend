@@ -29,7 +29,7 @@ django-timezone-field==4.1.2
 djangorestframework==3.12.4
 dnspython==2.1.0
 entrypoints==0.3
-GDAL==3.2.2
+# GDAL==3.2.2
 idna==2.10
 ipykernel==5.5.5
 ipython==7.23.1
