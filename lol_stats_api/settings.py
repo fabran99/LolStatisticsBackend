@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'stats',
     'lol_stats_api',
-    'assets'
+    'assets',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [
