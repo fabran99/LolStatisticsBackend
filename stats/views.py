@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 from time import sleep
 from django.conf import settings
+import os
 from datetime import datetime as dt, timedelta as td
 from .serializers import getMatchlistSerializer
 from lol_stats_api.helpers.variables import SERVER_REAL_NAME_TO_ROUTE
@@ -12,9 +13,15 @@ from lol_stats_api.helpers.redis import get_gameid, set_gameid
 MAX_RETRIES = 5
 MAX_TIME_TO_REFRESH = td(minutes=15)
 
+STATS_API_KEY = os.getenv("STATS_API_KEY", None)
+
 class LeagueAPIViewset(viewsets.ViewSet):
     def get_matchlist(self, request):
-        print(request.META)
+        print(request.META.get("Authorization"))
+        auth = request.META.get("Authorization")
+        if STATS_API_KEY is None or auth != STATS_API_KEY:
+            return JsonResponse({"response":"Unauthorized"}, status=403)
+
         get_serializer = getMatchlistSerializer(data = request.GET)
         get_serializer.is_valid(raise_exception=True)
         limit = get_serializer.validated_data.get("limit")
