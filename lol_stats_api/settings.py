@@ -142,6 +142,8 @@ INGAME_CALLS_API_KEY = os.getenv("INGAME_CALLS_API_KEY", "")
 DEF_LANGUAGE = os.getenv("DEF_LANGUAGE", None)
 MONGO_DB_HOST = os.getenv("MONGO_DB_HOST", None)
 
+LOL_STATS_API_KEY = os.getenv("LOL_STATS_API_KEY", None)
+
 
 # Celery
 CELERY_ACCEPT_CONTENT = ['application/json']
@@ -154,3 +156,4 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://{}:{}/{}'.format(os.getenv(
     "CELERY_HOST"), os.getenv("CELERY_PORT"), os.getenv("CELERY_RESULT_DB"))
 CELERY_RESULT_TRANSPORT_OPTIONES = {'visibility_timeout': 7200}
+
