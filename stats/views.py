@@ -17,9 +17,8 @@ STATS_API_KEY = os.getenv("STATS_API_KEY", None)
 
 class LeagueAPIViewset(viewsets.ViewSet):
     def get_matchlist(self, request):
-        print(request.META.get("Authorization"))
-        print(request.META)
-        auth = request.META.get("Authorization")
+        auth = request.META.get("HTTP_AUTHORIZATION")
+        print(auth)
         if STATS_API_KEY is None or auth != STATS_API_KEY:
             return JsonResponse({"response":"Unauthorized"}, status=403)
 
