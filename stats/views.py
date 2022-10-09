@@ -14,6 +14,7 @@ MAX_TIME_TO_REFRESH = td(minutes=15)
 
 class LeagueAPIViewset(viewsets.ViewSet):
     def get_matchlist(self, request):
+        print(request.META)
         get_serializer = getMatchlistSerializer(data = request.GET)
         get_serializer.is_valid(raise_exception=True)
         limit = get_serializer.validated_data.get("limit")
