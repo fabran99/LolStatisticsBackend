@@ -16,7 +16,6 @@ MAX_TIME_TO_REFRESH = td(minutes=15)
 
 
 class LeagueAPIViewset(viewsets.ViewSet):
-    @ratelimit(key='ip', rate='100/minute')
     def get_matchlist(self, request):
         auth = request.META.get("HTTP_AUTHORIZATION")
         if LOL_STATS_API_KEY is None or auth != LOL_STATS_API_KEY:

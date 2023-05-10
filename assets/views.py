@@ -7,7 +7,6 @@ from .serializers import *
 from .business import get_main_list
 
 class MainListView(viewsets.ViewSet):
-    @ratelimit(key='ip', rate='10/minute')
     def get(self, request):
         return get_main_list()
 
