@@ -9,12 +9,14 @@ from .serializers import getMatchlistSerializer
 from lol_stats_api.helpers.variables import SERVER_REAL_NAME_TO_ROUTE
 from stats.riot_api_routes import get_matchlist_by_puuid_id, get_player_by_name
 from lol_stats_api.helpers.redis import get_gameid, set_gameid
+from django_ratelimit.decorators import ratelimit
 
 MAX_RETRIES = 5
 MAX_TIME_TO_REFRESH = td(minutes=15)
 
 
 class LeagueAPIViewset(viewsets.ViewSet):
+    @ratelimit(key='ip', rate='100/minute')
     def get_matchlist(self, request):
         auth = request.META.get("HTTP_AUTHORIZATION")
         if LOL_STATS_API_KEY is None or auth != LOL_STATS_API_KEY:

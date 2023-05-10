@@ -82,7 +82,7 @@ def clear_data_from_3_days_ago():
     """
     Elimina los datos de hace mas de 3 dias
     """
-    timestamp = get_matches.x_days_ago(3)
+    timestamp = get_matches.x_days_ago(5)
     more_time_ago = get_matches.x_days_ago(5)
 
     # Parche 10.23 en adelante
@@ -127,7 +127,7 @@ def clear_redis_from_3_days_ago():
                 break
 
             data_match = json.loads(match)
-            timestamp = get_matches.x_days_ago(3)
+            timestamp = get_matches.x_days_ago(5)
             # Si esta dentro del rango, la vuelvo a colocar y continuo
             if data_match['timestamp'] > timestamp:
                 db_matchlist.rpush(server, match)

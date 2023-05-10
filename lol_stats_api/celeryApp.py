@@ -31,7 +31,7 @@ app.conf.beat_schedule = {
     },
     'periodically_generate_new_stats':{
         'task':'periodically_generate_new_stats',
-        'schedule':crontab(minute='30', hour="20,5,10,15")
+        'schedule':crontab(minute='30', hour="5",day_of_week="1")
     },
     'periodically_update_assets':{
         'task':'periodically_update_assets',
