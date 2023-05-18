@@ -28,6 +28,7 @@ def update_player_list(player_sample=player_sample, servers=SERVER_ROUTES.keys()
             if key in POST_DIAMOND_TIERS:
                 print("{} en {}".format(key, server))
                 data = get_high_elo_player_list_by_elo(key, server)
+                sleep(1)
                 if data is None or len(data['entries']) == 0:
                     continue
                 data = data['entries']
@@ -49,13 +50,14 @@ def update_player_list(player_sample=player_sample, servers=SERVER_ROUTES.keys()
                     page = 1
 
                     if key in ["DIAMOND", "PLATINUM"]:
-                        page = random.randint(2, 5)
+                        page = random.randint(4, 6)
                     else:
                         page = random.randint(1, 3)
 
                     while page > 0:
                         data = get_player_list_by_division(
                             key, div, server, page=str(page))
+                        sleep(1)
                         if data is None:
                             page = page-1
                             continue
