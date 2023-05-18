@@ -81,7 +81,6 @@ def get_matches_sample_from_player_list(server="LAS"):
         # Traigo la lista de datos
         game_list = get_matchlist_by_puuid_id(
             row['puuid'], server, only_ranked=True, endIndex=20, beginTime=begin_time, endTime=end_time)
-        print(game_list)
         # Actualizo la cantidad de partidas del jugador
         match_number = 0
         if game_list is not None:
@@ -92,7 +91,6 @@ def get_matches_sample_from_player_list(server="LAS"):
         if match_number == 0 and not np.isnan(row['zero_matches_number']) and int(row['zero_matches_number']) > 6:
             print("Borrando jugador, 6 pasadas sin partidas\n")
             found = Player.objects.filter(id=row['id'])
-            print(found)
             found.delete()
             continue
 
@@ -164,7 +162,6 @@ def process_match(match):
     timestamp = x_days_ago(3)
     # Datos ya procesados o de hace mas de 3 dias los ignoro
     if db_processed_match.get(match['gameId']) is not None or match['timestamp'] <= timestamp:
-        print("Partida antigua")
         return
     match_detail = match['match_detail']
     server = SERVER_REAL_NAME_TO_ROUTE[match_detail['platformId']]
@@ -287,7 +284,6 @@ def process_match(match):
     # Trato de traer la lista de timeline
     timelist_data = get_timelist_by_match_id(match['gameId'], server)
     timelist_stats = []
-    print("Pidiendo timelines")
     if timelist_data is None:
         sleep(10)
         timelist_data = get_timelist_by_match_id(match['gameId'], server)
@@ -321,10 +317,11 @@ def process_match(match):
                         break
             timelist_stats.append(frame)
         if len(timelist_stats) > 0:
-            print("Inserto timelines de los junglas")
-            # db_stats.timelines.insert_many(timelist_stats)
-            Timeline.objects.bulk_create(
+            try:
+                Timeline.objects.bulk_create(
                 [Timeline(**x) for x in timelist_stats])
+            except:
+                pass
 
         # ======================================================
         # Ahora busco si tengo jugadores de nivel 17 en adelante
@@ -371,14 +368,12 @@ def process_match(match):
                     try:
                         obj["_"+str(i+1)] = x[str(i+1)]
                     except:
-                        print(x)
                         block = True
                         break
                 if not block:
                     final_data.append(obj)
 
             if len(final_data):
-                print("Inserto level ups")
                 # db_stats.skill_up.insert_many(final_data)
                 SkillUp.objects.bulk_create([SkillUp(**x) for x in final_data])
 
@@ -425,12 +420,10 @@ def process_match(match):
                 buys.append(data)
 
         if len(buys) > 0:
-            print("Insertando objetos iniciales en la base de datos")
             # db_stats.first_buy.insert_many(buys)
             FirstBuy.objects.bulk_create([FirstBuy(**x) for x in buys])
 
     # Inserto en la base
-    print("Insertando datos de la partida en la base de datos")
     # db_stats.bans.insert_many(bans)
     Ban.objects.bulk_create([Ban(**x) for x in bans])
     # db_stats.champ_data.insert_many(c_data)

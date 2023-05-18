@@ -14,8 +14,6 @@ def get_data_or_none(url, token=None):
         r = requests.get(url, headers=get_token_header(token=token))
         if r.status_code == 200:
             return r.json()
-        else:
-            print(r.json())
     except requests.exceptions.ConnectionError as e:
         if "Exception decrypting" in str(e):
             print("La token que se uso no coincide, url: ", url)
@@ -27,8 +25,6 @@ def get_data_or_none(url, token=None):
             r = requests.get(url, headers=get_token_header(token=token))
             if r.status_code == 200:
                 return r.json()
-            else:
-                print(r.json())
         except:
             return None
 
@@ -97,9 +93,7 @@ def get_matchlist_by_account_id(id, region, only_ranked=False, endIndex=100, beg
     if endTime is not None:
         url += "&endTime="+str(endTime)
 
-    print(url)
     response = get_data_or_none(url, token=SERVER_ROUTES_API_KEYS[region] if not force_token else force_token)
-    print(response)
     if response is None:
         return None
     return response['matches']
@@ -121,9 +115,7 @@ def get_matchlist_by_puuid_id(id, region, only_ranked=False, endIndex=100, begin
     if endTime is not None:
         url += "&endTime="+str(int(endTime/1000))
 
-    print(url)
     response = get_data_or_none(url, token=SERVER_ROUTES_API_KEYS[region] if not force_token else force_token)
-    print(response)
     if response is None:
         return None
     return response
