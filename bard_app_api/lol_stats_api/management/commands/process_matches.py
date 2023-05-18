@@ -17,19 +17,15 @@ def process_match_for_each_key():
     Envia a la cola de celery para procesar una de cada server que este corriendo
     """
     number = 1 if len(db_matchlist.keys()) > 5 else 5
-    print(number, " Number")
     for server in db_matchlist.keys():
         for i in range(number):
             match = db_matchlist.lpop(server)
-            print(match)
             if match is None:
                 break
             data_match = json.loads(match)
-            print(data_match)
             timestamp = x_days_ago(3)
 
             if match and data_match['timestamp'] > timestamp:
-                print(data_match)
                 tasks.process_match_with_celery.delay(match)
 
 

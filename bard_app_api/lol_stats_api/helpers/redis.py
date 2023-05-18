@@ -11,10 +11,10 @@ else:
                         db=os.getenv("REDIS_METADATA_DB"), decode_responses=True)
     db_gameids = Redis(db=os.getenv("REDIS_GAMEID_LIST_DB"), host=os.getenv("REDIS_GAMEID_LIST_HOST"))
 
-db_matchlist = Redis(db=os.getenv("REDIS_GAMELIST_DB"),
+db_matchlist = Redis(host = os.getenv("REDIS_GAMELIST_HOST"), db=os.getenv("REDIS_GAMELIST_DB"),
                      decode_responses=True)
-db_processed_match = Redis(db=os.getenv("REDIS_GAMEID_PROCESSED_DB"))
-db_celery = Redis(db=os.getenv("CELERY_DB"), decode_responses=True)
+db_processed_match = Redis(host = os.getenv("REDIS_GAMEID_PROCESSED_HOST"),db=os.getenv("REDIS_GAMEID_PROCESSED_DB"))
+db_celery = Redis(host =os.getenv("CELERY_HOST"), db=os.getenv("CELERY_DB"), decode_responses=True)
 
 
 # ID de partidas por endpoint
