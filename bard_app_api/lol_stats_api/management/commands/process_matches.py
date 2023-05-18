@@ -26,7 +26,6 @@ def process_match_for_each_key():
             timestamp = x_days_ago(3)
 
             if match and data_match['timestamp'] > timestamp:
-                print(data_match)
                 tasks.process_match_with_celery.delay(match)
 
 
