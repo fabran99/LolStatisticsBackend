@@ -6,7 +6,7 @@ from redis import Redis
 from celery_singleton import Singleton, clear_locks
 import os
 from datetime import datetime as dt, timedelta as td
-from lol_stats_api.helpers.variables import player_sample, cron_players, LAST_IMPORTANT_PATCH
+from lol_stats_api.helpers.variables import LAST_IMPORTANT_PATCH, DAYS_TO_REMOVE_DATA
 from stats import get_players, get_matches, calculations
 from assets.load_data import load_data
 from lol_stats_api.helpers.mongodb import get_mongo_stats
@@ -26,26 +26,6 @@ db_stats = get_mongo_stats()
 def unlock_all(**kwargs):
     print("Test")
     clear_locks(app)
-
-
-# @app.on_after_finalize.connect
-# def setup_periodic_tasks(sender, **kwargs):
-#     sender.add_periodic_task(crontab(**cron_players), periodically_update_player_list.s(), 
-#     name="update_player_list_periodically")
-
-#     sender.add_periodic_task(crontab(hour="*/3", minute='35'), run_clear_data.s(), 
-#     name="run_clear_old_data")
-
-#     sender.add_periodic_task(crontab(minute='*/5'), clear_redis_from_3_days_ago.s(), 
-#     name="clear_redis_old_data")
-
-#     sender.add_periodic_task(crontab(minute='31', hour="20,5,10,15"), periodically_generate_new_stats.s(), 
-#     name="periodically_generate_new_stats")
-
-#     sender.add_periodic_task(crontab(minute='20', hour="*/4"), periodically_update_assets.s(), 
-#     name="periodically_update_assets")
-
-
 
 
 # Jugadores
@@ -74,16 +54,16 @@ def update_player_detail_in_celery(current_player):
 # Limpieza periodica
 @app.task(name='run_clear_data', base=Singleton)
 def run_clear_data():
-    clear_data_from_3_days_ago.delay()
+    clear_old_data.delay()
 
 
 @app.task(base=Singleton, name="clear_old_data")
-def clear_data_from_3_days_ago():
+def clear_old_data():
     """
-    Elimina los datos de hace mas de 3 dias
+    Elimina los datos viejos
     """
-    timestamp = get_matches.x_days_ago(5)
-    more_time_ago = get_matches.x_days_ago(5)
+    timestamp = get_matches.x_days_ago(DAYS_TO_REMOVE_DATA)
+    more_time_ago = get_matches.x_days_ago(DAYS_TO_REMOVE_DATA + 2)
 
     # Parche 10.23 en adelante
     timestamp = max(LAST_IMPORTANT_PATCH, timestamp)
@@ -92,29 +72,23 @@ def clear_data_from_3_days_ago():
     # Timelines
     print("Eliminando timelines")
     Timeline.objects.filter(gameTimestamp__lt=more_time_ago).delete()
-    # db_stats.timelines.remove({'gameTimestamp':{"$lt":more_time_ago}})
     print("Eliminando skill_ups")
-    # db_stats.skill_up.remove({'timestamp':{"$lt":more_time_ago}})
     SkillUp.objects.filter(timestamp__lt=more_time_ago).delete()
     # Bans
     print("Eliminando bans")
-    # db_stats.bans.remove({'timestamp':{"$lt":timestamp}})
     Ban.objects.filter(timestamp__lt=timestamp).delete()
     # Champ data
     print("Eliminando champ data")
-    # db_stats.champ_data.remove({'timestamp':{"$lt":timestamp}})
     ChampData.objects.filter(timestamp__lt=timestamp).delete()
     # Playstyle
     print("Eliminando champ playstyle")
-    # db_stats.champ_playstyle.remove({'timestamp':{"$lt":timestamp}})
     ChampPlaystyle.objects.filter(timestamp__lt=timestamp).delete()
     print("Eliminando first buy")
-    # db_stats.first_buy.remove({'timestamp':{"$lt":timestamp}})
     FirstBuy.objects.filter(timestamp__lt=more_time_ago).delete()
 
 
-@app.task(name='clear_redis_from_3_days_ago', base=Singleton)
-def clear_redis_from_3_days_ago():
+@app.task(name='clear_old_redis_data', base=Singleton)
+def clear_old_redis_data():
     """
     Reviso key por key si la ultima es muy vieja, y mientras lo sea sigo eliminando
     """
@@ -127,7 +101,7 @@ def clear_redis_from_3_days_ago():
                 break
 
             data_match = json.loads(match)
-            timestamp = get_matches.x_days_ago(5)
+            timestamp = get_matches.x_days_ago(DAYS_TO_REMOVE_DATA)
             # Si esta dentro del rango, la vuelvo a colocar y continuo
             if data_match['timestamp'] > timestamp:
                 db_matchlist.rpush(server, match)

@@ -21,12 +21,12 @@ app.conf.beat_schedule = {
         'task':'periodically_update_player_list',
         'schedule':crontab(**cron_players),
     },
-    'run_clear_old_data':{
-        'task':'run_clear_data',
+    'clear_old_data':{
+        'task':'clear_old_data',
         'schedule':crontab(hour="*/3", minute='35')
     },
     'clear_redis_old_data':{
-        'task':'clear_redis_from_3_days_ago',
+        'task':'clear_redis_old_data',
         'schedule':crontab(minute='*/20')
     },
     'periodically_generate_new_stats':{

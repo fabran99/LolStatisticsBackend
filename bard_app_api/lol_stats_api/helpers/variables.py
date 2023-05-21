@@ -249,3 +249,6 @@ PHASE_GOOD_RANGE = [53, 100]
 
 
 LAST_IMPORTANT_PATCH = dt(2020, 11, 9).timestamp()*1000
+
+# Limpiezas
+DAYS_TO_REMOVE_DATA = 5
