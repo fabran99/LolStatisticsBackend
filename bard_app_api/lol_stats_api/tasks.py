@@ -52,11 +52,6 @@ def update_player_detail_in_celery(current_player):
 
 
 # Limpieza periodica
-@app.task(name='run_clear_data', base=Singleton)
-def run_clear_data():
-    clear_old_data.delay()
-
-
 @app.task(base=Singleton, name="clear_old_data")
 def clear_old_data():
     """
@@ -87,8 +82,8 @@ def clear_old_data():
     FirstBuy.objects.filter(timestamp__lt=more_time_ago).delete()
 
 
-@app.task(name='clear_old_redis_data', base=Singleton)
-def clear_old_redis_data():
+@app.task(name='clear_redis_old_data', base=Singleton)
+def clear_redis_old_data():
     """
     Reviso key por key si la ultima es muy vieja, y mientras lo sea sigo eliminando
     """
