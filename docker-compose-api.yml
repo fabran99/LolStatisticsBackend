@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  # Main django backend
+  django:
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    env_file:
+      - ./prod.env # Your .env here
+    volumes:
+      - ./bard_app_api:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
+
+  # Nginx
+  nginx:
+    image: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - django
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10"

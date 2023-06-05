@@ -14,6 +14,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   # Nginx
   nginx:
@@ -25,6 +30,11 @@ services:
     depends_on:
       - django
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   # Celery
   celery-beat:
@@ -36,6 +46,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   celery-worker:
     build:
@@ -46,6 +61,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
 
   # Process matchlist
@@ -58,6 +78,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   # Process servers matchlists
   process-matchlist-br:
@@ -69,6 +94,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   process-matchlist-eun:
     build:
@@ -79,6 +109,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   process-matchlist-euw:
     build:
@@ -89,6 +124,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   process-matchlist-jp:
     build:
@@ -99,6 +139,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   process-matchlist-kr:
     build:
@@ -109,6 +154,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   process-matchlist-lan:
     build:
@@ -119,6 +169,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   process-matchlist-las:
     build:
@@ -129,6 +184,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   process-matchlist-na:
     build:
@@ -139,6 +199,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   process-matchlist-oc:
     build:
@@ -149,6 +214,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   process-matchlist-ru:
     build:
@@ -159,6 +229,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
 
   process-matchlist-tr:
     build:
@@ -169,3 +244,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"  # The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+        max-file: "10" 
